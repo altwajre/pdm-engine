@@ -1,0 +1,39 @@
+<configuration>
+
+    <property name="LOG_HOME" value="d:\\log"/>
+
+    <appender name="JOBFILE"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <append>true</append>
+        <File>${LOG_HOME}/job.log</File>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <pattern>%d %5p [ %F:%L ] - %m%n</pattern>
+        </layout>
+        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+            <FileNamePattern>${LOG_HOME}/job%i.log</FileNamePattern>
+            <minIndex>1</minIndex>
+            <maxIndex>10</maxIndex>
+        </rollingPolicy>
+        <triggeringPolicy
+                class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <MaxFileSize>10240KB</MaxFileSize>
+        </triggeringPolicy>
+    </appender>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>
+                %d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
+            </pattern>
+        </encoder>
+    </appender>
+
+    <logger name="cn.betasoft.pdm.engine.scheduler">
+        <level value="INFO"/>
+        <appender-ref ref="JOBFILE"/>
+    </logger>
+
+    <root level="INFO">
+        <appender-ref ref="STDOUT"/>
+    </root>
+</configuration>

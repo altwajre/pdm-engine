@@ -1,0 +1,52 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/PDM
+    username: postgres
+    password: root
+    type: com.zaxxer.hikari.HikariDataSource
+    hikari:
+      maximum-pool-size: 5
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        use_identifier_rollback: true
+        ddl-auto: update
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+management:
+  security:
+    enabled: false
+
+quartz:
+  enabled: true
+  useRam: true
+  datasource:
+      driverClassName: org.postgresql.Driver
+      url: jdbc:postgresql://localhost:5432/QUARTZ
+      username: postgres
+      password: root
+      poolSize: 12
+  properties:
+      instanceName: pdm-engine
+      instanceId: AUTO
+      makeSchedulerThreadDaemon: true
+      threadPoolClass: org.quartz.simpl.SimpleThreadPool
+      threadCount: 10
+      makeThreadsDaemons: true
+      jobStoreRamClass: org.quartz.simpl.RAMJobStore
+      jobStoreDbClass: org.quartz.impl.jdbcjobstore.JobStoreTX
+      driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
+      misfireThreshold: 3000
+      maxMisfiresToHandleAtATime: 40
+      tablePrefix: qrtz_
+
+akka:
+  config: akka.conf
+  systemName: pdmActorSystem
+  actorBeanClass: cn.betasoft.pdm.engine.actor.Supervisor
+  actorName: supervisor
+  pinnedDispatcher: pdm-pinned-dispatcher
+  futureDispatch: pdm-future-dispatcher
+
