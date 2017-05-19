@@ -8,6 +8,7 @@ import cn.betasoft.pdm.engine.event.PdmEventBusImpl;
 import cn.betasoft.pdm.engine.event.PdmMsgEnvelope;
 import cn.betasoft.pdm.engine.exception.DataCollectTimeOut;
 import cn.betasoft.pdm.engine.model.Indicator;
+import cn.betasoft.pdm.engine.monitor.LogExecutionTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,6 +82,7 @@ public class CollectDataActor extends AbstractActor {
 	}
 
 	@Override
+	@LogExecutionTime
 	public Receive createReceive() {
 		return receiveBuilder().match(Collect.class, collect -> {
 			Calendar collectCalendar = Calendar.getInstance();

@@ -10,8 +10,6 @@ import org.springframework.stereotype.Component;
 import akka.actor.ActorSystem;
 import akka.actor.AbstractActor;
 
-import javax.annotation.PostConstruct;
-
 @Aspect
 @Component
 public class MonitorActorAspect {
@@ -19,15 +17,15 @@ public class MonitorActorAspect {
 	@Autowired
 	ActorSystem system;
 
-	@Around("execution(* cn.betasoft.pdm.engine.scheduler.JobRunner.execute(..))")
+	@Around("@annotation(LogExecutionTime)")
 	public Object aroundOnReceive(ProceedingJoinPoint pjp) throws Throwable {
 		long start = System.currentTimeMillis();
 		Object retVal = pjp.proceed();
 		long end = System.currentTimeMillis();
-		AbstractActor actor = (AbstractActor) pjp.getTarget();
-		ActorStatistics stat = new ActorStatistics(actor.getSelf().toString(), actor.getSender().toString(), start,
-				end);
-		system.eventStream().publish(stat);
+		//AbstractActor actor = (AbstractActor) pjp.getTarget();
+		//ActorStatistics stat = new ActorStatistics(actor.getSelf().toString(), actor.getSender().toString(), start,
+				//end);
+		//system.eventStream().publish(stat);
 		return retVal;
 	}
 }
