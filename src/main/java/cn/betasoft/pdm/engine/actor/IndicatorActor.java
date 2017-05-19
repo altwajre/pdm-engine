@@ -4,13 +4,13 @@ import akka.actor.AbstractActor;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
-import akka.event.Logging;
-import akka.event.LoggingAdapter;
 import cn.betasoft.pdm.engine.config.akka.ActorBean;
 import cn.betasoft.pdm.engine.config.akka.AkkaProperties;
 import cn.betasoft.pdm.engine.config.akka.SpringProps;
 import cn.betasoft.pdm.engine.model.Indicator;
 import cn.betasoft.pdm.engine.model.SingleIndicatorTask;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.HashMap;
@@ -36,7 +36,7 @@ public class IndicatorActor extends AbstractActor {
 
 	public Indicator indicator;
 
-	private final LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
+	private static final Logger logger = LoggerFactory.getLogger(IndicatorActor.class);
 
 	public IndicatorActor(Indicator indicator) {
 		this.indicator = indicator;
@@ -44,7 +44,7 @@ public class IndicatorActor extends AbstractActor {
 
 	@Override
 	public void preStart() {
-		log.info("preStart,indicator is:" + indicator.toString());
+		logger.info("preStart,indicator is:" + indicator.toString());
 
 		indicator.getSingleIndicatorTasks().stream().forEach(task -> {
 			if (!taskActorRefs.containsKey(task.getKey())) {
@@ -52,19 +52,20 @@ public class IndicatorActor extends AbstractActor {
 			}
 		});
 
-		Props props = SpringProps.create(actorSystem, CollectDataActor.class, new Object[] { indicator });
+		Props props = SpringProps.create(actorSystem, CollectDataActor.class, new Object[] { indicator })
+				.withDispatcher(akkaProperties.getWorkDispatch());
 		collectActorRef = getContext().actorOf(props, "collect");
 		this.getContext().watch(collectActorRef);
 	}
 
 	@Override
 	public void postRestart(Throwable reason) {
-		log.info("postRestart,indicator is:" + indicator.toString());
+		logger.info("postRestart,indicator is:" + indicator.toString());
 	}
 
 	@Override
 	public void preRestart(Throwable reason, Optional<Object> message) throws Exception {
-		log.info("preRestart,indicator is:" + indicator.toString());
+		logger.info("preRestart,indicator is:" + indicator.toString());
 		// Keep the call to postStop(), but no stopping of children
 		postStop();
 	}
@@ -72,8 +73,8 @@ public class IndicatorActor extends AbstractActor {
 	@Override
 	public Receive createReceive() {
 		return receiveBuilder().match(String.class, s -> {
-			log.info("Received String message: {}", s);
-		}).matchAny(o -> log.info("received unknown message")).build();
+			logger.info("Received String message: {}", s);
+		}).matchAny(o -> logger.info("received unknown message")).build();
 	}
 
 	private void createTaskActor(SingleIndicatorTask singleIndicatorTask) {
@@ -83,8 +84,9 @@ public class IndicatorActor extends AbstractActor {
 					.create(actorSystem, SingleIndicatorTaskActor.class, new Object[] { singleIndicatorTask })
 					.withDispatcher(akkaProperties.getPinnedDispatcher());
 		} else {
-			props = SpringProps.create(actorSystem, SingleIndicatorTaskActor.class,
-					new Object[] { singleIndicatorTask });
+			props = SpringProps
+					.create(actorSystem, SingleIndicatorTaskActor.class, new Object[] { singleIndicatorTask })
+					.withDispatcher(akkaProperties.getWorkDispatch());
 		}
 		ActorRef actorRef = getContext().actorOf(props, "st-" + singleIndicatorTask.getKey());
 		this.getContext().watch(actorRef);

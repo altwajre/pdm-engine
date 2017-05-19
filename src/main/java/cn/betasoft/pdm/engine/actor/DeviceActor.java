@@ -4,15 +4,14 @@ import akka.actor.AbstractActor;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
-import akka.event.Logging;
-import akka.event.LoggingAdapter;
 import cn.betasoft.pdm.engine.config.akka.ActorBean;
 import cn.betasoft.pdm.engine.config.akka.AkkaProperties;
 import cn.betasoft.pdm.engine.config.akka.SpringProps;
 import cn.betasoft.pdm.engine.model.Device;
 import cn.betasoft.pdm.engine.model.ManagedObject;
 import cn.betasoft.pdm.engine.model.MultiIndicatorTask;
-import org.hibernate.engine.spi.Managed;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.HashMap;
@@ -39,7 +38,7 @@ public class DeviceActor extends AbstractActor {
 
 	private Device device;
 
-	private final LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
+	private static final Logger logger = LoggerFactory.getLogger(DeviceActor.class);
 
 	public DeviceActor(Device device) {
 		this.device = device;
@@ -47,7 +46,7 @@ public class DeviceActor extends AbstractActor {
 
 	@Override
 	public void preStart() {
-		log.info("preStart,device is:" + device.toString());
+		logger.info("preStart,device is:" + device.toString());
 		device.getMos().stream().forEach(mo -> {
 			if (!moActorRefs.containsKey(mo.getMoPath())) {
 				createMoActor(mo);
@@ -60,12 +59,12 @@ public class DeviceActor extends AbstractActor {
 
 	@Override
 	public void postRestart(Throwable reason) {
-		log.info("postRestart,device is:" + device.toString());
+		logger.info("postRestart,device is:" + device.toString());
 	}
 
 	@Override
 	public void preRestart(Throwable reason, Optional<Object> message) throws Exception {
-		log.info("preRestart,device is:" + device.toString());
+		logger.info("preRestart,device is:" + device.toString());
 		// Keep the call to postStop(), but no stopping of children
 		postStop();
 	}
@@ -73,8 +72,8 @@ public class DeviceActor extends AbstractActor {
 	@Override
 	public Receive createReceive() {
 		return receiveBuilder().match(String.class, s -> {
-			log.info("Received String message: {}", s);
-		}).matchAny(o -> log.info("received unknown message")).build();
+			logger.info("Received String message: {}", s);
+		}).matchAny(o -> logger.info("received unknown message")).build();
 	}
 
 	private void createMoActor(ManagedObject mo) {
@@ -92,7 +91,7 @@ public class DeviceActor extends AbstractActor {
 					.withDispatcher(akkaProperties.getPinnedDispatcher());
 		} else {
 			props = SpringProps.create(actorSystem, MultipleIndicatorTaskActor.class,
-					new Object[] { multiIndicatorTask });
+					new Object[] { multiIndicatorTask }).withDispatcher(akkaProperties.getWorkDispatch());
 		}
 		ActorRef actorRef = getContext().actorOf(props, "mulIndi-" + multiIndicatorTask.getName());
 		this.getContext().watch(actorRef);

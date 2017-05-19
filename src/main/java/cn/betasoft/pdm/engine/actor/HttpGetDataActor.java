@@ -3,14 +3,13 @@ package cn.betasoft.pdm.engine.actor;
 import akka.actor.AbstractActor;
 import akka.actor.ActorSystem;
 import akka.dispatch.*;
-import akka.dispatch.forkjoin.ForkJoinPool;
-import akka.event.Logging;
-import akka.event.LoggingAdapter;
 import akka.pattern.Patterns;
 
 import cn.betasoft.pdm.engine.config.akka.ActorBean;
 import cn.betasoft.pdm.engine.config.akka.AkkaProperties;
 import cn.betasoft.pdm.engine.exception.DataCollectTimeOut;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import scala.concurrent.ExecutionContext;
 import scala.concurrent.Future;
@@ -33,7 +32,7 @@ public class HttpGetDataActor extends AbstractActor {
 
 	private final static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-	private final LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
+	private static final Logger logger = LoggerFactory.getLogger(HttpGetDataActor.class);
 
 	@Autowired
 	private ActorSystem actorSystem;
@@ -67,14 +66,14 @@ public class HttpGetDataActor extends AbstractActor {
 			Future<SingleIndicatorTaskActor.Result> result = Futures
 					.firstCompletedOf(Arrays.asList(getDataFuture, delayed), ec);
 			akka.pattern.Patterns.pipe(result, ec).to(sender());
-		}).matchAny(o -> log.info("received unknown message")).build();
+		}).matchAny(o -> logger.info("received unknown message")).build();
 	}
 
 	private Future<SingleIndicatorTaskActor.Result> getDataByHttp(HttpGetData httpGetData) {
 		Future<SingleIndicatorTaskActor.Result> getDataFuture = future(new Callable<SingleIndicatorTaskActor.Result>() {
 
 			public SingleIndicatorTaskActor.Result call() {
-				log.info("command is {},task time is {} ,http collect start...", httpGetData.getCommand(),
+				logger.info("command is {},task time is {} ,http collect start...", httpGetData.getCommand(),
 						sdf.format(httpGetData.scheduledFireTime));
 				Random random = new Random();
 				int sleepTime = 100 + random.nextInt(2000);
@@ -88,7 +87,7 @@ public class HttpGetDataActor extends AbstractActor {
 				SingleIndicatorTaskActor.Result result = new SingleIndicatorTaskActor.Result(
 						httpGetData.getScheduledFireTime(), value);
 
-				log.info("command is {},task time is {} ,http collect finish...", httpGetData.getCommand(),
+				logger.info("command is {},task time is {} ,http collect finish...", httpGetData.getCommand(),
 						sdf.format(httpGetData.scheduledFireTime));
 				return result;
 			}

@@ -7,6 +7,8 @@ import cn.betasoft.pdm.engine.config.akka.ActorBean;
 import cn.betasoft.pdm.engine.event.PdmEventBusImpl;
 import cn.betasoft.pdm.engine.event.PdmMsgEnvelope;
 import cn.betasoft.pdm.engine.model.MultiIndicatorTask;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Optional;
@@ -17,7 +19,7 @@ import java.util.Optional;
 @ActorBean
 public class MultipleIndicatorTaskActor extends AbstractActor {
 
-	private final LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
+	private static final Logger logger = LoggerFactory.getLogger(MultipleIndicatorTaskActor.class);
 
 	private MultiIndicatorTask multiIndicatorTask;
 
@@ -30,7 +32,7 @@ public class MultipleIndicatorTaskActor extends AbstractActor {
 
 	@Override
 	public void preStart() {
-		log.info("preStart,multiIndicatorTask is:" + multiIndicatorTask.getName());
+		logger.info("preStart,multiIndicatorTask is:" + multiIndicatorTask.getName());
 		multiIndicatorTask.getIndicators().forEach(indicator -> {
 			StringBuilder sb = new StringBuilder();
 			sb.append(indicator.getMo().getDevice().getIp()).append("-");
@@ -42,12 +44,12 @@ public class MultipleIndicatorTaskActor extends AbstractActor {
 
 	@Override
 	public void postRestart(Throwable reason) {
-		log.info("postRestart,multiIndicatorTask is:" + multiIndicatorTask.getName());
+		logger.info("postRestart,multiIndicatorTask is:" + multiIndicatorTask.getName());
 	}
 
 	@Override
 	public void preRestart(Throwable reason, Optional<Object> message) throws Exception {
-		log.info("preRestart,multiIndicatorTask is:" + multiIndicatorTask.getName());
+		logger.info("preRestart,multiIndicatorTask is:" + multiIndicatorTask.getName());
 		// Keep the call to postStop(), but no stopping of children
 		postStop();
 	}
@@ -55,11 +57,11 @@ public class MultipleIndicatorTaskActor extends AbstractActor {
 	@Override
 	public Receive createReceive() {
 		return receiveBuilder().match(String.class, s -> {
-			log.info("Received String message: {}", s);
+			logger.info("Received String message: {}", s);
 		}).match(SingleIndicatorTaskActor.Result.class, result -> {
-			log.info("receive indicator result: {}", result.getValue());
+			logger.info("receive indicator result: {}", result.getValue());
 		}).matchAny(o -> {
-			log.info("received unknown message");
+			logger.info("received unknown message");
 		}).build();
 	}
 }

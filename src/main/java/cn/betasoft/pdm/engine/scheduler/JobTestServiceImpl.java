@@ -40,9 +40,9 @@ public class JobTestServiceImpl implements JobTestService {
 		List<Indicator> indicators = new ArrayList<>();
 
 		// 不能包括中文
-		String[] indicatorNames = {"PING","CPU","MEM","DISK"};
+		String[] indicatorNames = {"PING","CPU","MEM","DISK","PORT"};
 
-		for (int i = 0; i < 10; i++) {
+		for (int i = 0; i < 5; i++) {
 			Indicator indicator = new Indicator();
 			indicator.setName("indicator-" + i);
 			indicator.setParameters(UUID.randomUUID().toString());
@@ -50,7 +50,7 @@ public class JobTestServiceImpl implements JobTestService {
 			indicators.add(indicator);
 		}
 
-		for (int i = 0; i < 10; i++) {
+		for (int i = 0; i < 3; i++) {
 			Device device = new Device();
 			device.setIp("138.174.65." + i);
 			device.setName("device-" + i);

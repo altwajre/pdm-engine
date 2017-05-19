@@ -17,7 +17,11 @@ public class AkkaProperties {
 
 	private String pinnedDispatcher;
 
+	private String workDispatch;
+
 	private String futureDispatch;
+
+	private String monitorDispatch;
 
 	public String getSystemName() {
 		return systemName;
@@ -59,11 +63,27 @@ public class AkkaProperties {
 		this.pinnedDispatcher = pinnedDispatcher;
 	}
 
+	public String getWorkDispatch() {
+		return workDispatch;
+	}
+
+	public void setWorkDispatch(String workDispatch) {
+		this.workDispatch = workDispatch;
+	}
+
 	public String getFutureDispatch() {
 		return futureDispatch;
 	}
 
 	public void setFutureDispatch(String futureDispatch) {
 		this.futureDispatch = futureDispatch;
+	}
+
+	public String getMonitorDispatch() {
+		return monitorDispatch;
+	}
+
+	public void setMonitorDispatch(String monitorDispatch) {
+		this.monitorDispatch = monitorDispatch;
 	}
 }

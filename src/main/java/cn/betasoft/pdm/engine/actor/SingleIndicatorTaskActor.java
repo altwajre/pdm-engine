@@ -1,12 +1,12 @@
 package cn.betasoft.pdm.engine.actor;
 
 import akka.actor.AbstractActor;
-import akka.event.Logging;
-import akka.event.LoggingAdapter;
 import cn.betasoft.pdm.engine.config.akka.ActorBean;
 import cn.betasoft.pdm.engine.model.SingleIndicatorTask;
 import com.google.common.collect.EvictingQueue;
 import org.quartz.CronExpression;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -51,7 +51,7 @@ public class SingleIndicatorTaskActor extends AbstractActor {
 
 	private final static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-	private final LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
+	private static final Logger logger = LoggerFactory.getLogger(SingleIndicatorTaskActor.class);
 
 	public SingleIndicatorTaskActor(SingleIndicatorTask task) {
 		this.task = task;
@@ -59,7 +59,7 @@ public class SingleIndicatorTaskActor extends AbstractActor {
 
 	@Override
 	public void preStart() {
-		log.info("preStart,task is:" + task.toString());
+		logger.info("preStart,task is:" + task.toString());
 		try {
 			fireCronExpression = new CronExpression(task.getCronExpression());
 			for (String holiday : task.getHolidayCronExrpessions()) {
@@ -68,34 +68,41 @@ public class SingleIndicatorTaskActor extends AbstractActor {
 				holidayCronExpressions.add(cronExpression);
 			}
 		} catch (ParseException ex) {
-			log.info("parse cron error", ex);
+			logger.info("parse cron error", ex);
 		}
 		resultQueue = EvictingQueue.create(task.getIndicatorNum());
 	}
 
 	@Override
 	public void postRestart(Throwable reason) {
-		log.info("postRestart,task is:" + task.toString());
+		logger.info("postRestart,task is:" + task.toString());
 	}
 
 	@Override
 	public void preRestart(Throwable reason, Optional<Object> message) throws Exception {
-		log.info("preRestart,task is:" + task.toString());
+		logger.info("preRestart,task is:" + task.toString());
 		postStop();
 	}
 
 	@Override
 	public Receive createReceive() {
 		return receiveBuilder().match(String.class, s -> {
-			log.info("Received String message: {}", s);
+			logger.info("Received String message: {}", s);
 		}).match(Result.class, result -> {
+			Random random = new Random();
+			int sleepTime = 100 + random.nextInt(2000);
+			try{
+				Thread.sleep(sleepTime);
+			}catch(Exception ex){
+				ex.printStackTrace();
+			}
 			Date schedulerFireTime = result.getScheduledFireTime();
 			if (fireCronExpression.isSatisfiedBy(schedulerFireTime)) {
-				log.info("receive result,task name is: {}, task type is: {}, schedulerTime is: {} ,value is:{}",
+				logger.info("receive result,task name is: {}, task type is: {}, schedulerTime is: {} ,value is:{}",
 						task.getName(), task.getType(), sdf.format(result.getScheduledFireTime()), result.getValue());
 				boolean isHoliday = inHoliday(schedulerFireTime);
 				if (isHoliday) {
-					log.info(
+					logger.info(
 							"receive result,task name is: {}, task type is: {}, schedulerTime is: {} in holiday,value is:{}",
 							task.getName(), task.getType(), sdf.format(result.getScheduledFireTime()),
 							result.getValue());
@@ -103,12 +110,12 @@ public class SingleIndicatorTaskActor extends AbstractActor {
 					resultQueue.add(result);
 
 					if (resultQueue.size() == task.getIndicatorNum()) {
-						log.info(resultQueue.size()+">>>>>excute>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+						logger.info(resultQueue.size()+">>>>>excute>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 					}
 				}
 			}
 
-		}).matchAny(o -> log.info("received unknown message")).build();
+		}).matchAny(o -> logger.info("received unknown message")).build();
 	}
 
 	public boolean inHoliday(Date schedulerFireTime) {

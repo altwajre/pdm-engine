@@ -1,14 +1,15 @@
 package cn.betasoft.pdm.engine.actor;
 
 import akka.actor.*;
-import akka.event.Logging;
-import akka.event.LoggingAdapter;
 import cn.betasoft.pdm.engine.config.akka.ActorBean;
+import cn.betasoft.pdm.engine.config.akka.AkkaProperties;
 import cn.betasoft.pdm.engine.config.akka.SpringProps;
 import cn.betasoft.pdm.engine.event.PdmEventBusImpl;
 import cn.betasoft.pdm.engine.event.PdmMsgEnvelope;
 import cn.betasoft.pdm.engine.exception.DataCollectTimeOut;
 import cn.betasoft.pdm.engine.model.Indicator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.text.SimpleDateFormat;
@@ -41,6 +42,9 @@ public class CollectDataActor extends AbstractActor {
 	@Autowired
 	private ActorSystem actorSystem;
 
+	@Autowired
+	private AkkaProperties akkaProperties;
+
 	private Indicator indicator;
 
 	private Date scheduledFireTime;
@@ -49,7 +53,7 @@ public class CollectDataActor extends AbstractActor {
 
 	private final static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-	private final LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
+	private static final Logger logger = LoggerFactory.getLogger(CollectDataActor.class);
 
 	public CollectDataActor(Indicator indicator) {
 		this.indicator = indicator;
@@ -57,21 +61,22 @@ public class CollectDataActor extends AbstractActor {
 
 	@Override
 	public void preStart() {
-		log.info("preStart,indicator is:" + indicator.getName());
+		logger.info("preStart,indicator is:" + indicator.getName());
 		this.scheduledFireTime = new Date();
-		Props props = SpringProps.create(actorSystem, HttpGetDataActor.class, null);
+		Props props = SpringProps.create(actorSystem, HttpGetDataActor.class, null)
+				.withDispatcher(akkaProperties.getWorkDispatch());
 		httpGetDataActorRef = getContext().actorOf(props, "httpGetData");
 		this.getContext().watch(httpGetDataActorRef);
 	}
 
 	@Override
 	public void postRestart(Throwable reason) {
-		log.info("postRestart,indicator is:" + indicator.getName());
+		logger.info("postRestart,indicator is:" + indicator.getName());
 	}
 
 	@Override
 	public void preRestart(Throwable reason, Optional<Object> message) throws Exception {
-		log.info("preRestart,indicator is:" + indicator.getName());
+		logger.info("preRestart,indicator is:" + indicator.getName());
 		postStop();
 	}
 
@@ -87,7 +92,7 @@ public class CollectDataActor extends AbstractActor {
 			fireCalendar.set(Calendar.MILLISECOND, 0);
 
 			if (fireCalendar.after(collectCalendar)) {
-				log.info("task time is {} ,start collect...", sdf.format(collect.getScheduledFireTime()));
+				logger.info("task time is {} ,start collect...", sdf.format(collect.getScheduledFireTime()));
 
 				this.scheduledFireTime = collect.getScheduledFireTime();
 
@@ -95,11 +100,11 @@ public class CollectDataActor extends AbstractActor {
 						collect.getScheduledFireTime(), indicator.getName());
 				httpGetDataActorRef.tell(httpGetData, self());
 			} else {
-				log.info("current time is {},and task time is {},discard....", sdf.format(this.scheduledFireTime),
+				logger.info("current time is {},and task time is {},discard....", sdf.format(this.scheduledFireTime),
 						sdf.format(collect.getScheduledFireTime()));
 			}
 		}).match(SingleIndicatorTaskActor.Result.class, result -> {
-			log.info("result [value] {}", result.getValue());
+			logger.info("result [value] {}", result.getValue());
 			this.getContext().actorSelection("../st-*").tell(result, this.getSender());
 
 			// 把消息发送给消息队列，以便综合指标处理actor使用
@@ -108,11 +113,11 @@ public class CollectDataActor extends AbstractActor {
 			sb.append(indicator.getMo().getMoPath()).append("-");
 			sb.append(indicator.getName());
 			pdmEventBusImpl.publish(new PdmMsgEnvelope(sb.toString(), result));
-		}).match(Status.Failure.class,f -> {
-			DataCollectTimeOut exception = (DataCollectTimeOut)f.cause();
-			log.info("timeout........"+exception.getMessage());
+		}).match(Status.Failure.class, f -> {
+			DataCollectTimeOut exception = (DataCollectTimeOut) f.cause();
+			logger.info("timeout........" + exception.getMessage());
 		}).matchAny(o -> {
-			log.info("received unknown message"+o.getClass());
+			logger.info("received unknown message" + o.getClass());
 		}).build();
 	}
 

@@ -3,7 +3,6 @@ package cn.betasoft.pdm.engine.scheduler;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import cn.betasoft.pdm.engine.actor.CollectDataActor;
-import cn.betasoft.pdm.engine.actor.Supervisor;
 import org.quartz.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +18,7 @@ public class JobRunner implements Job {
 
 	private final static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-	private final static Logger logger = LoggerFactory.getLogger(TargetDynamicJob.class);
+	private final static Logger logger = LoggerFactory.getLogger(JobRunner.class);
 
 	@Override
 	public void execute(JobExecutionContext context) throws JobExecutionException {

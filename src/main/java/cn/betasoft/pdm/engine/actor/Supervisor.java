@@ -1,15 +1,14 @@
 package cn.betasoft.pdm.engine.actor;
 
 import akka.actor.*;
-import akka.event.Logging;
-import akka.event.LoggingAdapter;
 import cn.betasoft.pdm.engine.config.akka.ActorBean;
 import cn.betasoft.pdm.engine.config.akka.SpringProps;
 import cn.betasoft.pdm.engine.model.Device;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -38,18 +37,18 @@ public class Supervisor extends AbstractActor {
 	// key:deviceIp
 	private Map<String, ActorRef> deviceActorRefs = new HashMap<>();
 
-	private final LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
+	private static final Logger logger = LoggerFactory.getLogger(Supervisor.class);
 
 	@Override
 	public Receive createReceive() {
 		return receiveBuilder().match(DeviceInfo.class, deviceInfo -> {
-			log.info("Received device message,size is: {}", deviceInfo.getDevices().size());
+			logger.info("Received device message,size is: {}", deviceInfo.getDevices().size());
 			deviceInfo.getDevices().stream().forEach(device -> {
 				if (!deviceActorRefs.containsKey(device.getIp())) {
 					createDeviceActor(device);
 				}
 			});
-		}).matchAny(o -> log.info("received unknown message {}",o.toString())).build();
+		}).matchAny(o -> logger.info("received unknown message {}",o.toString())).build();
 	}
 
 	private void createDeviceActor(Device device) {

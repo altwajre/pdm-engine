@@ -4,12 +4,12 @@ import akka.actor.AbstractActor;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
-import akka.event.Logging;
-import akka.event.LoggingAdapter;
 import cn.betasoft.pdm.engine.config.akka.ActorBean;
 import cn.betasoft.pdm.engine.config.akka.SpringProps;
 import cn.betasoft.pdm.engine.model.Indicator;
 import cn.betasoft.pdm.engine.model.ManagedObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.HashMap;
@@ -30,7 +30,7 @@ public class MoActor extends AbstractActor {
 
 	private ManagedObject mo;
 
-	private final LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
+	private static final Logger logger = LoggerFactory.getLogger(MoActor.class);
 
 	public MoActor(ManagedObject mo) {
 		this.mo = mo;
@@ -38,7 +38,7 @@ public class MoActor extends AbstractActor {
 
 	@Override
 	public void preStart() {
-		log.info("preStart,mo is:" + mo.toString());
+		logger.info("preStart,mo is:" + mo.toString());
 
 		mo.getIndicators().stream().forEach(indicator -> {
 			if (!indicatorActorRefs.containsKey(indicator.getName())) {
@@ -49,12 +49,12 @@ public class MoActor extends AbstractActor {
 
 	@Override
 	public void postRestart(Throwable reason) {
-		log.info("postRestart,mo is:" + mo.toString());
+		logger.info("postRestart,mo is:" + mo.toString());
 	}
 
 	@Override
 	public void preRestart(Throwable reason, Optional<Object> message) throws Exception {
-		log.info("preRestart,mo is:" + mo.toString());
+		logger.info("preRestart,mo is:" + mo.toString());
 		// Keep the call to postStop(), but no stopping of children
 		postStop();
 	}
@@ -62,8 +62,8 @@ public class MoActor extends AbstractActor {
 	@Override
 	public Receive createReceive() {
 		return receiveBuilder().match(String.class, s -> {
-			log.info("Received String message: {}", s);
-		}).matchAny(o -> log.info("received unknown message")).build();
+			logger.info("Received String message: {}", s);
+		}).matchAny(o -> logger.info("received unknown message")).build();
 	}
 
 	private void createIndicatorActor(Indicator indicator) {
