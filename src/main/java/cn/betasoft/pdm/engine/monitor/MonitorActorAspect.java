@@ -5,7 +5,10 @@ import akka.actor.AbstractActor;
 import cn.betasoft.pdm.engine.exception.InaccessablePointcutAnnotationException;
 import cn.betasoft.pdm.engine.perf.actor.ActorStatistics;
 import com.google.common.base.Stopwatch;
+import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.Signature;
+import org.aspectj.lang.annotation.AfterThrowing;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
@@ -17,6 +20,7 @@ import akka.actor.ActorSystem;
 import org.springframework.util.StopWatch;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 @Aspect
@@ -45,4 +49,15 @@ public class MonitorActorAspect {
 		}
 	}
 
+	@AfterThrowing(pointcut = "execution(* cn.betasoft.pdm.engine.*.*(..))", throwing = "ex")
+	public void processException(JoinPoint joinPoint, Throwable ex) {
+		Signature signature = joinPoint.getSignature();
+		String methodName = signature.getName();
+		String stuff = signature.toString();
+		String arguments = Arrays.toString(joinPoint.getArgs());
+		System.out.println("Write something in the log... We have caught exception in method: "
+				+ methodName + " with arguments "
+				+ arguments + "\nand the full toString: " + stuff + "\nthe exception is: "
+				+ ex.getMessage()+ex);
+	}
 }
