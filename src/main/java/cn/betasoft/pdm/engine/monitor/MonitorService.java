@@ -35,5 +35,6 @@ public class MonitorService {
 				ActorRef.noSender());
 		monitorSupervisor.tell(new MonitorSupervisor.CreateMailboxMonitor(), ActorRef.noSender());
 		monitorSupervisor.tell(new MonitorSupervisor.CreateActorMonitor(), ActorRef.noSender());
+		monitorSupervisor.tell(new MonitorSupervisor.CreateHeapMonitor(), ActorRef.noSender());
 	}
 }

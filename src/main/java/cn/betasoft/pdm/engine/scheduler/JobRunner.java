@@ -25,7 +25,7 @@ public class JobRunner implements Job {
 	}
 
 	@Override
-	@LogExecutionTime
+	//@LogExecutionTime
 	public void execute(JobExecutionContext context) throws JobExecutionException {
 		final String collectActorPath = (String) context.getMergedJobDataMap().get("collectActorPath");
 		JobKey jobKey = context.getJobDetail().getKey();

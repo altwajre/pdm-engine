@@ -50,7 +50,7 @@ public class JobTestServiceImpl implements JobTestService {
 			indicators.add(indicator);
 		}
 
-		for (int i = 0; i < 3; i++) {
+		for (int i = 0; i < 1; i++) {
 			Device device = new Device();
 			device.setIp("138.174.65." + i);
 			device.setName("device-" + i);
@@ -59,7 +59,7 @@ public class JobTestServiceImpl implements JobTestService {
 			int moNum = 1 + moRandom.nextInt(4);
 
 			// 一个设备下有多个资源
-			for (int j = 0; j < 1; j++) {
+			for (int j = 0; j < 5; j++) {
 				ManagedObject mo = new ManagedObject();
 				mo.setMoPath(UUID.randomUUID().toString());
 				mo.setName("mo-" + i);

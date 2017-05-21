@@ -82,7 +82,6 @@ public class CollectDataActor extends AbstractActor {
 	}
 
 	@Override
-	@LogExecutionTime
 	public Receive createReceive() {
 		return receiveBuilder().match(Collect.class, collect -> {
 			Calendar collectCalendar = Calendar.getInstance();

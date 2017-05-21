@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.text.SimpleDateFormat;
+import java.util.Date;
 
 @ActorBean
 public class ActorMonitorActor extends AbstractActor {
@@ -24,9 +25,9 @@ public class ActorMonitorActor extends AbstractActor {
 	public Receive createReceive() {
 		return receiveBuilder().match(ActorStatistics.class, statistics -> {
 			logger.info(
-					"************************ actor statistics, actor is : {}, entry time is {}, leave time is: {}",
-					statistics.getReceiver(), sdf.format(statistics.getEntryTime()),
-					sdf.format(statistics.getExitTime()));
+					"************************ actor statistics, actor is : {}, entry time is {}, run time is: {}",
+					statistics.getReceiver(), sdf.format(new Date(statistics.getEntryTime())),
+					statistics.getTotalTimeMillis());
 		}).matchAny(o -> {
 			logger.info("received unknown message");
 		}).build();

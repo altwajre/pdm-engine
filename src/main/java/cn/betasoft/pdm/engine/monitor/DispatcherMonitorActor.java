@@ -4,12 +4,8 @@ import akka.actor.AbstractActor;
 import akka.actor.ActorSystem;
 import akka.dispatch.Dispatcher;
 import akka.dispatch.ExecutorServiceDelegate;
-import akka.dispatch.Futures;
 import akka.dispatch.forkjoin.ForkJoinPool;
-import akka.event.Logging;
-import akka.event.LoggingAdapter;
 import cn.betasoft.pdm.engine.config.akka.ActorBean;
-import cn.betasoft.pdm.engine.scheduler.JobTestService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,7 +59,6 @@ public class DispatcherMonitorActor extends AbstractActor {
 					dispatcherName, forkJoinPool.getParallelism(), forkJoinPool.getActiveThreadCount(),
 					forkJoinPool.getQueuedTaskCount(), forkJoinPool.getPoolSize(), forkJoinPool.getRunningThreadCount(),
 					forkJoinPool.getQueuedSubmissionCount());
-
 		}).matchAny(o -> logger.info("received unknown message")).build();
 	}
 }

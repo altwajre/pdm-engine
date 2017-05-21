@@ -27,10 +27,12 @@ public class MailBoxMonitorActor extends AbstractActor {
 	@Override
 	public Receive createReceive() {
 		return receiveBuilder().match(MailboxStatistics.class, statistics -> {
+			/**
 			logger.info(
 					"************************ mailbox statistics, actor is : {}, queue size is: {},entry time is {}, leave time is: {}",
 					statistics.getReceiver(), statistics.getQueueSize(), sdf.format(statistics.getEntryTime()),
 					sdf.format(statistics.getExitTime()));
+			 */
 		}).matchAny(o -> {
 			logger.info("received unknown message");
 		}).build();

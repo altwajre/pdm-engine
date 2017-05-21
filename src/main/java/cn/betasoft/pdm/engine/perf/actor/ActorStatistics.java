@@ -6,15 +6,15 @@ public class ActorStatistics {
 
 	private String sender;
 
-	private Long entryTime;
+	private long entryTime;
 
-	private Long exitTime;
+	private long totalTimeMillis;
 
-	public ActorStatistics(String receiver, String sender, Long entryTime, Long exitTime) {
+	public ActorStatistics(String receiver, String sender, long entryTime, long totalTimeMillis) {
 		this.receiver = receiver;
 		this.sender = sender;
 		this.entryTime = entryTime;
-		this.exitTime = exitTime;
+		this.totalTimeMillis = totalTimeMillis;
 	}
 
 	public String getReceiver() {
@@ -25,12 +25,11 @@ public class ActorStatistics {
 		return sender;
 	}
 
-	public Long getEntryTime() {
+	public long getEntryTime() {
 		return entryTime;
 	}
 
-	public Long getExitTime() {
-		return exitTime;
+	public long getTotalTimeMillis() {
+		return totalTimeMillis;
 	}
-
 }

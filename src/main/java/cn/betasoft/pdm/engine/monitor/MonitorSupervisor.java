@@ -51,6 +51,12 @@ public class MonitorSupervisor extends AbstractActor {
 		}
 	}
 
+	static public class CreateHeapMonitor {
+
+		public CreateHeapMonitor() {
+		}
+	}
+
 	@Autowired
 	private ActorSystem actorSystem;
 
@@ -62,6 +68,8 @@ public class MonitorSupervisor extends AbstractActor {
 	private ActorRef mailBoxMonitorActorRef;
 
 	private ActorRef actorMonitorActorRef;
+
+	private ActorRef heapMonitorActorRef;
 
 	private ExecutionContext ec;
 
@@ -89,6 +97,7 @@ public class MonitorSupervisor extends AbstractActor {
 	@Override
 	public Receive createReceive() {
 		return receiveBuilder().match(CreateDispatcherMonitor.class, dispatcherMonitor -> {
+			//对每个线程池dispathcer,生成一个数据采集Actor
 			dispatcherMonitor.getDispatcherNames().forEach(name -> {
 				Props props = SpringProps.create(actorSystem, DispatcherMonitorActor.class, new Object[] { name })
 						.withDispatcher(akkaProperties.getMonitorDispatch());
@@ -97,6 +106,7 @@ public class MonitorSupervisor extends AbstractActor {
 				dispatcherActorRefs.put(name, actorRef);
 			});
 
+			//每隔10秒采集数据
 			dispatcherActorRefs.forEach((name, actorRef) -> {
 				actorSystem.scheduler().schedule(Duration.create(5, TimeUnit.SECONDS),
 						Duration.create(10, TimeUnit.SECONDS), actorRef, "Tick", ec, null);
@@ -113,6 +123,13 @@ public class MonitorSupervisor extends AbstractActor {
 			actorMonitorActorRef = this.getContext().actorOf(props, "actorMonitor");
 			this.getContext().watch(actorMonitorActorRef);
 			actorSystem.eventStream().subscribe(actorMonitorActorRef, ActorStatistics.class);
+		}).match(CreateHeapMonitor.class, heapMonitor -> {
+			Props props = SpringProps.create(actorSystem, HeapMonitorActor.class, null)
+					.withDispatcher(akkaProperties.getMonitorDispatch());
+			heapMonitorActorRef = this.getContext().actorOf(props, "heapMonitor");
+			this.getContext().watch(actorMonitorActorRef);
+			actorSystem.scheduler().schedule(Duration.create(5, TimeUnit.SECONDS),
+					Duration.create(10, TimeUnit.SECONDS), heapMonitorActorRef, "Tick", ec, null);
 		}).build();
 	}
 }

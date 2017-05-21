@@ -8,6 +8,7 @@ import akka.pattern.Patterns;
 import cn.betasoft.pdm.engine.config.akka.ActorBean;
 import cn.betasoft.pdm.engine.config.akka.AkkaProperties;
 import cn.betasoft.pdm.engine.exception.DataCollectTimeOut;
+import cn.betasoft.pdm.engine.monitor.LogExecutionTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,29 +70,33 @@ public class HttpGetDataActor extends AbstractActor {
 		}).matchAny(o -> logger.info("received unknown message")).build();
 	}
 
+	//@LogExecutionTime
+	private SingleIndicatorTaskActor.Result handler(HttpGetData httpGetData){
+		logger.info("command is {},task time is {} ,http collect start...", httpGetData.getCommand(),
+				sdf.format(httpGetData.scheduledFireTime));
+		Random random = new Random();
+		int sleepTime = 100 + random.nextInt(2000);
+		try {
+			Thread.sleep(sleepTime);
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+		// 把数据发送给所有这个采集指标下的任务，这些任务Actor以st-开头
+		String value = httpGetData.getCommand() + "-" + sdf.format(new Date());
+		SingleIndicatorTaskActor.Result result = new SingleIndicatorTaskActor.Result(
+				httpGetData.getScheduledFireTime(), value);
+
+		logger.info("command is {},task time is {} ,http collect finish...", httpGetData.getCommand(),
+				sdf.format(httpGetData.scheduledFireTime));
+		return result;
+	}
+
 	private Future<SingleIndicatorTaskActor.Result> getDataByHttp(HttpGetData httpGetData) {
 		Future<SingleIndicatorTaskActor.Result> getDataFuture = future(new Callable<SingleIndicatorTaskActor.Result>() {
 
 			public SingleIndicatorTaskActor.Result call() {
-				logger.info("command is {},task time is {} ,http collect start...", httpGetData.getCommand(),
-						sdf.format(httpGetData.scheduledFireTime));
-				Random random = new Random();
-				int sleepTime = 100 + random.nextInt(2000);
-				try {
-					Thread.sleep(sleepTime);
-				} catch (Exception ex) {
-					ex.printStackTrace();
-				}
-				// 把数据发送给所有这个采集指标下的任务，这些任务Actor以st-开头
-				String value = httpGetData.getCommand() + "-" + sdf.format(new Date());
-				SingleIndicatorTaskActor.Result result = new SingleIndicatorTaskActor.Result(
-						httpGetData.getScheduledFireTime(), value);
-
-				logger.info("command is {},task time is {} ,http collect finish...", httpGetData.getCommand(),
-						sdf.format(httpGetData.scheduledFireTime));
-				return result;
+				return handler(httpGetData);
 			}
-
 		}, ec);
 
 		return getDataFuture;
