@@ -1,9 +1,11 @@
 package cn.betasoft.pdm.engine.actor;
 
-import akka.actor.AbstractActor;
-import akka.actor.ActorRef;
-import akka.actor.ActorSystem;
-import akka.actor.Props;
+import akka.actor.*;
+import akka.japi.pf.DeciderBuilder;
+import static akka.actor.SupervisorStrategy.resume;
+import static akka.actor.SupervisorStrategy.restart;
+import static akka.actor.SupervisorStrategy.stop;
+import static akka.actor.SupervisorStrategy.escalate;
 import cn.betasoft.pdm.engine.config.akka.ActorBean;
 import cn.betasoft.pdm.engine.config.akka.AkkaProperties;
 import cn.betasoft.pdm.engine.config.akka.SpringProps;
@@ -12,16 +14,36 @@ import cn.betasoft.pdm.engine.model.SingleIndicatorTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import scala.concurrent.duration.Duration;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * 一个采集指标，例如CPU，内存，接口
  */
 @ActorBean
 public class IndicatorActor extends AbstractActor {
+
+	static public class SingleIndicatorTaskInfo {
+
+		private List<SingleIndicatorTask> singleIndicatorTasks;
+
+		public SingleIndicatorTaskInfo(List<SingleIndicatorTask> singleIndicatorTasks) {
+			this.singleIndicatorTasks = singleIndicatorTasks;
+		}
+
+		public List<SingleIndicatorTask> getSingleIndicatorTasks() {
+			return singleIndicatorTasks;
+		}
+	}
+
+	static public class CollectDataInfo {
+		public CollectDataInfo() {
+		}
+	}
 
 	@Autowired
 	private ActorSystem actorSystem;
@@ -42,39 +64,38 @@ public class IndicatorActor extends AbstractActor {
 		this.indicator = indicator;
 	}
 
-	@Override
-	public void preStart() {
-		logger.info("preStart,indicator is:" + indicator.toString());
-
-		indicator.getSingleIndicatorTasks().stream().forEach(task -> {
-			if (!taskActorRefs.containsKey(task.getKey())) {
-				createTaskActor(task);
-			}
-		});
-
-		Props props = SpringProps.create(actorSystem, CollectDataActor.class, new Object[] { indicator })
-				.withDispatcher(akkaProperties.getWorkDispatch());
-		collectActorRef = getContext().actorOf(props, "collect");
-		this.getContext().watch(collectActorRef);
-	}
+	private static SupervisorStrategy strategy = new OneForOneStrategy(10, Duration.create("1 minute"),
+			DeciderBuilder.match(ArithmeticException.class, e -> resume()).match(NullPointerException.class, e -> {
+				return restart();
+			}).match(IllegalArgumentException.class, e -> {
+				return stop();
+			}).matchAny(o -> escalate()).build());
 
 	@Override
-	public void postRestart(Throwable reason) {
-		logger.info("postRestart,indicator is:" + indicator.toString());
-	}
-
-	@Override
-	public void preRestart(Throwable reason, Optional<Object> message) throws Exception {
-		logger.info("preRestart,indicator is:" + indicator.toString());
-		// Keep the call to postStop(), but no stopping of children
-		postStop();
+	public SupervisorStrategy supervisorStrategy() {
+		return strategy;
 	}
 
 	@Override
 	public Receive createReceive() {
-		return receiveBuilder().match(String.class, s -> {
-			logger.info("Received String message: {}", s);
-		}).matchAny(o -> logger.info("received unknown message")).build();
+		return receiveBuilder().match(SingleIndicatorTaskInfo.class, singleIndicatorTaskInfo -> {
+			singleIndicatorTaskInfo.getSingleIndicatorTasks().stream().forEach(task -> {
+				if (!taskActorRefs.containsKey(task.getKey())) {
+					createTaskActor(task);
+				}
+			});
+		}).match(CollectDataInfo.class, collectDataInfo -> {
+			Props props = SpringProps.create(actorSystem, CollectDataActor.class, new Object[] { indicator })
+					.withDispatcher(akkaProperties.getWorkDispatch());
+			collectActorRef = getContext().actorOf(props, "collect");
+			this.getContext().watch(collectActorRef);
+		}).match(Terminated.class, t -> t.getActor().path().name().startsWith("st-"), t -> {
+			taskActorRefs = taskActorRefs.entrySet().stream().filter(map -> !map.getValue().equals(t.getActor()))
+					.collect(Collectors.toMap(p -> p.getKey(), p -> p.getValue()));
+			logger.info("childActorRefs size is:" + taskActorRefs.size());
+		}).matchAny(o -> {
+			logger.info("received unknown message" + o.toString());
+		}).build();
 	}
 
 	private void createTaskActor(SingleIndicatorTask singleIndicatorTask) {

@@ -48,7 +48,7 @@ public class Supervisor extends AbstractActor {
 					createDeviceActor(device);
 				}
 			});
-		}).matchAny(o -> logger.info("received unknown message {}",o.toString())).build();
+		}).matchAny(o -> logger.info("received unknown message {}", o.toString())).build();
 	}
 
 	private void createDeviceActor(Device device) {
@@ -56,5 +56,11 @@ public class Supervisor extends AbstractActor {
 		ActorRef actorRef = getContext().actorOf(props, "d-" + device.getIp());
 		this.getContext().watch(actorRef);
 		deviceActorRefs.put(device.getIp(), actorRef);
+
+		// create mo actors
+		actorRef.tell(new DeviceActor.MoInfo(device.getMos()), this.getSelf());
+
+		// create multi indicator actor
+		actorRef.tell(new DeviceActor.MultiIndicatorTaskInfo(device.getMultiIndicatorTasks()), this.getSelf());
 	}
 }

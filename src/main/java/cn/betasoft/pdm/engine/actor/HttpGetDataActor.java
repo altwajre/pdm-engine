@@ -7,8 +7,9 @@ import akka.pattern.Patterns;
 
 import cn.betasoft.pdm.engine.config.akka.ActorBean;
 import cn.betasoft.pdm.engine.config.akka.AkkaProperties;
+import cn.betasoft.pdm.engine.config.aspectj.FutureLogExecutionTime;
+import cn.betasoft.pdm.engine.config.aspectj.LogExecutionTime;
 import cn.betasoft.pdm.engine.exception.DataCollectTimeOut;
-import cn.betasoft.pdm.engine.monitor.LogExecutionTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,12 +71,12 @@ public class HttpGetDataActor extends AbstractActor {
 		}).matchAny(o -> logger.info("received unknown message")).build();
 	}
 
-	//@LogExecutionTime
-	private SingleIndicatorTaskActor.Result handler(HttpGetData httpGetData){
+	@FutureLogExecutionTime
+	private SingleIndicatorTaskActor.Result httpGetHandler(HttpGetData httpGetData){
 		logger.info("command is {},task time is {} ,http collect start...", httpGetData.getCommand(),
 				sdf.format(httpGetData.scheduledFireTime));
 		Random random = new Random();
-		int sleepTime = 100 + random.nextInt(2000);
+		int sleepTime = 100 + random.nextInt(1000);
 		try {
 			Thread.sleep(sleepTime);
 		} catch (Exception ex) {
@@ -95,7 +96,7 @@ public class HttpGetDataActor extends AbstractActor {
 		Future<SingleIndicatorTaskActor.Result> getDataFuture = future(new Callable<SingleIndicatorTaskActor.Result>() {
 
 			public SingleIndicatorTaskActor.Result call() {
-				return handler(httpGetData);
+				return httpGetHandler(httpGetData);
 			}
 		}, ec);
 

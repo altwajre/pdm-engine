@@ -24,7 +24,8 @@ public class MonitorService {
 
 	private ActorRef monitorSupervisor;
 
-	private String[] dispatcherNames = { "akka.actor.default-dispatcher", "pdm-work-dispatcher", "pdm-future-dispatcher" };
+	private String[] dispatcherNames = { "akka.actor.default-dispatcher", "pdm-work-dispatcher",
+			"pdm-future-dispatcher" };
 
 	@PostConstruct
 	public void init() {
@@ -36,5 +37,7 @@ public class MonitorService {
 		monitorSupervisor.tell(new MonitorSupervisor.CreateMailboxMonitor(), ActorRef.noSender());
 		monitorSupervisor.tell(new MonitorSupervisor.CreateActorMonitor(), ActorRef.noSender());
 		monitorSupervisor.tell(new MonitorSupervisor.CreateHeapMonitor(), ActorRef.noSender());
+		monitorSupervisor.tell(new MonitorSupervisor.CreateDeadLetterMonitor(), ActorRef.noSender());
+		monitorSupervisor.tell(new MonitorSupervisor.CreateExceptionMonitor(), ActorRef.noSender());
 	}
 }

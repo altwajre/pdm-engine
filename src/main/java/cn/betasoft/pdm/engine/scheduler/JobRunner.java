@@ -3,7 +3,6 @@ package cn.betasoft.pdm.engine.scheduler;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import cn.betasoft.pdm.engine.actor.CollectDataActor;
-import cn.betasoft.pdm.engine.monitor.LogExecutionTime;
 import org.quartz.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

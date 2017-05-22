@@ -14,7 +14,7 @@
 
     <aspects>
         <!-- declare aspects to the weaver -->
-        <aspect name="cn.betasoft.pdm.engine.monitor.MonitorActorAspect" />
+        <aspect name="cn.betasoft.pdm.engine.config.aspectj.MonitorActorAspect" />
     </aspects>
 
 </aspectj>

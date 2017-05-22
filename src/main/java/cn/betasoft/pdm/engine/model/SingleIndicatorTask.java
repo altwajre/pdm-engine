@@ -27,6 +27,8 @@ public class SingleIndicatorTask implements Serializable {
 
 	private TaskType type;
 
+	private Indicator indicator;
+
 	public SingleIndicatorTask() {
 
 	}
@@ -85,6 +87,14 @@ public class SingleIndicatorTask implements Serializable {
 
 	public void setType(TaskType type) {
 		this.type = type;
+	}
+
+	public Indicator getIndicator() {
+		return indicator;
+	}
+
+	public void setIndicator(Indicator indicator) {
+		this.indicator = indicator;
 	}
 
 	@Override public boolean equals(Object o) {

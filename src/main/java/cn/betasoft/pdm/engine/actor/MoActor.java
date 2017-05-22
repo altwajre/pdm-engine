@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -21,6 +22,19 @@ import java.util.Optional;
  */
 @ActorBean
 public class MoActor extends AbstractActor {
+
+	static public class IndicatorInfo {
+
+		private List<Indicator> indicatorList;
+
+		public IndicatorInfo(List<Indicator> indicatorList) {
+			this.indicatorList = indicatorList;
+		}
+
+		public List<Indicator> getIndicatorList() {
+			return indicatorList;
+		}
+	}
 
 	@Autowired
 	private ActorSystem actorSystem;
@@ -37,32 +51,13 @@ public class MoActor extends AbstractActor {
 	}
 
 	@Override
-	public void preStart() {
-		logger.info("preStart,mo is:" + mo.toString());
-
-		mo.getIndicators().stream().forEach(indicator -> {
-			if (!indicatorActorRefs.containsKey(indicator.getName())) {
-				createIndicatorActor(indicator);
-			}
-		});
-	}
-
-	@Override
-	public void postRestart(Throwable reason) {
-		logger.info("postRestart,mo is:" + mo.toString());
-	}
-
-	@Override
-	public void preRestart(Throwable reason, Optional<Object> message) throws Exception {
-		logger.info("preRestart,mo is:" + mo.toString());
-		// Keep the call to postStop(), but no stopping of children
-		postStop();
-	}
-
-	@Override
 	public Receive createReceive() {
-		return receiveBuilder().match(String.class, s -> {
-			logger.info("Received String message: {}", s);
+		return receiveBuilder().match(IndicatorInfo.class, indicatorInfo -> {
+			indicatorInfo.getIndicatorList().stream().forEach(indicator -> {
+				if (!indicatorActorRefs.containsKey(indicator.getName())) {
+					createIndicatorActor(indicator);
+				}
+			});
 		}).matchAny(o -> logger.info("received unknown message")).build();
 	}
 
@@ -71,5 +66,10 @@ public class MoActor extends AbstractActor {
 		ActorRef actorRef = getContext().actorOf(props, "indi-" + indicator.getName());
 		this.getContext().watch(actorRef);
 		indicatorActorRefs.put(indicator.getName(), actorRef);
+
+		// create single task
+		actorRef.tell(new IndicatorActor.SingleIndicatorTaskInfo(indicator.getSingleIndicatorTasks()), this.getSelf());
+		// create collect
+		actorRef.tell(new IndicatorActor.CollectDataInfo(), this.getSelf());
 	}
 }

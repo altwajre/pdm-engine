@@ -1,13 +1,11 @@
 package cn.betasoft.pdm.engine.monitor;
 
-import akka.actor.AbstractActor;
-import akka.actor.ActorRef;
-import akka.actor.ActorSystem;
-import akka.actor.Props;
+import akka.actor.*;
 
 import cn.betasoft.pdm.engine.config.akka.ActorBean;
 import cn.betasoft.pdm.engine.config.akka.AkkaProperties;
 import cn.betasoft.pdm.engine.config.akka.SpringProps;
+import cn.betasoft.pdm.engine.model.ExceptionInfo;
 import cn.betasoft.pdm.engine.perf.actor.ActorStatistics;
 import cn.betasoft.pdm.engine.perf.mailbox.MailboxStatistics;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,6 +55,18 @@ public class MonitorSupervisor extends AbstractActor {
 		}
 	}
 
+	static public class CreateDeadLetterMonitor {
+
+		public CreateDeadLetterMonitor() {
+		}
+	}
+
+	static public class CreateExceptionMonitor {
+
+		public CreateExceptionMonitor() {
+		}
+	}
+
 	@Autowired
 	private ActorSystem actorSystem;
 
@@ -70,6 +80,10 @@ public class MonitorSupervisor extends AbstractActor {
 	private ActorRef actorMonitorActorRef;
 
 	private ActorRef heapMonitorActorRef;
+
+	private ActorRef deadLetterMonitorActorRef;
+
+	private ActorRef exceptionMonitorActorRef;
 
 	private ExecutionContext ec;
 
@@ -130,6 +144,18 @@ public class MonitorSupervisor extends AbstractActor {
 			this.getContext().watch(actorMonitorActorRef);
 			actorSystem.scheduler().schedule(Duration.create(5, TimeUnit.SECONDS),
 					Duration.create(10, TimeUnit.SECONDS), heapMonitorActorRef, "Tick", ec, null);
+		}).match(CreateDeadLetterMonitor.class, deadLetterMonitor -> {
+			Props props = SpringProps.create(actorSystem, DeadLetterMonitorActor.class, null)
+					.withDispatcher(akkaProperties.getMonitorDispatch());
+			deadLetterMonitorActorRef = this.getContext().actorOf(props, "deadLetterMonitor");
+			this.getContext().watch(deadLetterMonitorActorRef);
+			actorSystem.eventStream().subscribe(deadLetterMonitorActorRef, DeadLetter.class);
+		}).match(CreateExceptionMonitor.class, exceptionMonitor -> {
+			Props props = SpringProps.create(actorSystem, ExceptionMonitorActor.class, null)
+					.withDispatcher(akkaProperties.getMonitorDispatch());
+			exceptionMonitorActorRef = this.getContext().actorOf(props, "exceptionMonitor");
+			this.getContext().watch(exceptionMonitorActorRef);
+			actorSystem.eventStream().subscribe(exceptionMonitorActorRef, ExceptionInfo.class);
 		}).build();
 	}
 }

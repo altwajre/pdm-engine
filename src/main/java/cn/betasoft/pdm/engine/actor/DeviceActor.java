@@ -8,6 +8,7 @@ import cn.betasoft.pdm.engine.config.akka.ActorBean;
 import cn.betasoft.pdm.engine.config.akka.AkkaProperties;
 import cn.betasoft.pdm.engine.config.akka.SpringProps;
 import cn.betasoft.pdm.engine.model.Device;
+import cn.betasoft.pdm.engine.model.Indicator;
 import cn.betasoft.pdm.engine.model.ManagedObject;
 import cn.betasoft.pdm.engine.model.MultiIndicatorTask;
 import org.slf4j.Logger;
@@ -15,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -23,6 +25,32 @@ import java.util.Optional;
  */
 @ActorBean
 public class DeviceActor extends AbstractActor {
+
+	static public class MoInfo {
+
+		private List<ManagedObject> moList;
+
+		public MoInfo(List<ManagedObject> moList) {
+			this.moList = moList;
+		}
+
+		public List<ManagedObject> getMoList() {
+			return moList;
+		}
+	}
+
+	static public class MultiIndicatorTaskInfo {
+
+		private List<MultiIndicatorTask> multiIndicatorTasks;
+
+		public MultiIndicatorTaskInfo(List<MultiIndicatorTask> multiIndicatorTasks) {
+			this.multiIndicatorTasks = multiIndicatorTasks;
+		}
+
+		public List<MultiIndicatorTask> getMultiIndicatorTasks() {
+			return multiIndicatorTasks;
+		}
+	}
 
 	@Autowired
 	private ActorSystem actorSystem;
@@ -45,34 +73,17 @@ public class DeviceActor extends AbstractActor {
 	}
 
 	@Override
-	public void preStart() {
-		logger.info("preStart,device is:" + device.toString());
-		device.getMos().stream().forEach(mo -> {
-			if (!moActorRefs.containsKey(mo.getMoPath())) {
-				createMoActor(mo);
-			}
-		});
-		device.getMultiIndicatorTasks().stream().forEach(mia -> {
-			createMultiIndicatorTaskActor(mia);
-		});
-	}
-
-	@Override
-	public void postRestart(Throwable reason) {
-		logger.info("postRestart,device is:" + device.toString());
-	}
-
-	@Override
-	public void preRestart(Throwable reason, Optional<Object> message) throws Exception {
-		logger.info("preRestart,device is:" + device.toString());
-		// Keep the call to postStop(), but no stopping of children
-		postStop();
-	}
-
-	@Override
 	public Receive createReceive() {
-		return receiveBuilder().match(String.class, s -> {
-			logger.info("Received String message: {}", s);
+		return receiveBuilder().match(MoInfo.class, moInfo -> {
+			moInfo.getMoList().stream().forEach(mo -> {
+				if (!moActorRefs.containsKey(mo.getMoPath())) {
+					createMoActor(mo);
+				}
+			});
+		}).match(MultiIndicatorTaskInfo.class, multiIndicatorTaskInfo -> {
+			multiIndicatorTaskInfo.getMultiIndicatorTasks().stream().forEach(mia -> {
+				createMultiIndicatorTaskActor(mia);
+			});
 		}).matchAny(o -> logger.info("received unknown message")).build();
 	}
 
@@ -81,6 +92,9 @@ public class DeviceActor extends AbstractActor {
 		ActorRef actorRef = getContext().actorOf(props, "mo-" + mo.getMoPath());
 		this.getContext().watch(actorRef);
 		moActorRefs.put(mo.getMoPath(), actorRef);
+
+		// create indicator actor
+		actorRef.tell(new MoActor.IndicatorInfo(mo.getIndicators()), this.getSelf());
 	}
 
 	private void createMultiIndicatorTaskActor(MultiIndicatorTask multiIndicatorTask) {
@@ -90,8 +104,9 @@ public class DeviceActor extends AbstractActor {
 					.create(actorSystem, MultipleIndicatorTaskActor.class, new Object[] { multiIndicatorTask })
 					.withDispatcher(akkaProperties.getPinnedDispatcher());
 		} else {
-			props = SpringProps.create(actorSystem, MultipleIndicatorTaskActor.class,
-					new Object[] { multiIndicatorTask }).withDispatcher(akkaProperties.getWorkDispatch());
+			props = SpringProps
+					.create(actorSystem, MultipleIndicatorTaskActor.class, new Object[] { multiIndicatorTask })
+					.withDispatcher(akkaProperties.getWorkDispatch());
 		}
 		ActorRef actorRef = getContext().actorOf(props, "mulIndi-" + multiIndicatorTask.getName());
 		this.getContext().watch(actorRef);

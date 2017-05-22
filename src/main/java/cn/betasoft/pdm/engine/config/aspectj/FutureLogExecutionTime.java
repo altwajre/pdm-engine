@@ -1,4 +1,4 @@
-package cn.betasoft.pdm.engine.monitor;
+package cn.betasoft.pdm.engine.config.aspectj;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -7,5 +7,5 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface LogExecutionTime {
+public @interface FutureLogExecutionTime {
 }

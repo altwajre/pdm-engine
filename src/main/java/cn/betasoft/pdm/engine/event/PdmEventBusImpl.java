@@ -2,7 +2,6 @@ package cn.betasoft.pdm.engine.event;
 
 import akka.actor.ActorRef;
 import akka.event.japi.LookupEventBus;
-import cn.betasoft.pdm.engine.monitor.LogExecutionTime;
 import org.springframework.stereotype.Component;
 
 @Component()

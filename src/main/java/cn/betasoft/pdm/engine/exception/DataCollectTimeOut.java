@@ -6,7 +6,7 @@ import java.util.Date;
 /**
  * 采集数据超时异常
  */
-public class DataCollectTimeOut extends Exception {
+public class DataCollectTimeOut extends RuntimeException {
 
 	private final static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 

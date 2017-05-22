@@ -37,18 +37,10 @@ public class JobTestServiceImpl implements JobTestService {
 	public void testActorModel() {
 		Set<Device> devices = new HashSet<>();
 
-		List<Indicator> indicators = new ArrayList<>();
+		Set<String> uuids = new HashSet<>();
 
 		// 不能包括中文
-		String[] indicatorNames = {"PING","CPU","MEM","DISK","PORT"};
-
-		for (int i = 0; i < 5; i++) {
-			Indicator indicator = new Indicator();
-			indicator.setName("indicator-" + i);
-			indicator.setParameters(UUID.randomUUID().toString());
-
-			indicators.add(indicator);
-		}
+		String[] indicatorNames = { "PING", "CPU", "MEM", "DISK", "PORT" };
 
 		for (int i = 0; i < 1; i++) {
 			Device device = new Device();
@@ -70,14 +62,17 @@ public class JobTestServiceImpl implements JobTestService {
 				Random indicatorRandom = new Random();
 				int indicatorNum = indicatorRandom.nextInt(4);
 				for (int k = 0; k < indicatorNum; k++) {
-					Indicator indicator = indicators.get(k);
+					Indicator indicator = new Indicator();
 					indicator.setName(indicatorNames[k]);
+					indicator.setParameters(UUID.randomUUID().toString());
+
 					indicator.setMo(mo);
+
 					mo.getIndicators().add(indicator);
 
 					// 一个指标下有多个任务
 					Random taskRandom = new Random();
-					int taskNum = 5 + taskRandom.nextInt(10);
+					int taskNum = 2 + taskRandom.nextInt(10);
 					for (int m = 0; m < taskNum; m++) {
 						SingleIndicatorTask task = new SingleIndicatorTask();
 						if (m % 2 == 0) {
@@ -86,15 +81,20 @@ public class JobTestServiceImpl implements JobTestService {
 							task.setType(TaskType.RULE);
 						}
 
-						task.setKey(UUID.randomUUID().toString());
+						String uuid = UUID.randomUUID().toString();
+						while (uuids.contains(uuid)) {
+							uuid = UUID.randomUUID().toString();
+						}
+						uuids.add(uuid);
+						task.setKey(uuid);
 
-						if(m ==1){
+						if (m == 1) {
 							task.setTopLevel(true);
-						}else {
+						} else {
 							task.setTopLevel(false);
 						}
 
-						int[] days = { CronWeekdays.SATURDAY.getWeekday(), CronWeekdays.SUNDAY.getWeekday()};
+						int[] days = { CronWeekdays.SATURDAY.getWeekday(), CronWeekdays.SUNDAY.getWeekday() };
 						String holidayCronExrepsstion = HolidayCronBuilder.INSTANCE.buildWeeklyCron(days);
 						task.getHolidayCronExrpessions().add(holidayCronExrepsstion);
 
@@ -113,6 +113,10 @@ public class JobTestServiceImpl implements JobTestService {
 						task.setIndicatorNum(taskIndicatorNum);
 
 						indicator.getSingleIndicatorTasks().add(task);
+						task.setIndicator(indicator);
+
+						System.out.println("task is: " + task.getKey() + ",indicator is:" + indicator.getName()
+								+ ",mo is:" + mo.getMoPath() + ",device is:" + device.getIp());
 					}
 				}
 
@@ -122,20 +126,19 @@ public class JobTestServiceImpl implements JobTestService {
 		}
 
 		List<Device> deviceList = new ArrayList<>(devices);
-		//第一个设备监听cpu和内存
+		// 第一个设备监听cpu和内存
 		Device firstDevice = deviceList.get(0);
-        MultiIndicatorTask multiTask01 = new MultiIndicatorTask();
+		MultiIndicatorTask multiTask01 = new MultiIndicatorTask();
 		multiTask01.setName(UUID.randomUUID().toString());
-        multiTask01.setDevice(firstDevice);
-		firstDevice.getMos().forEach(mo ->{
+		multiTask01.setDevice(firstDevice);
+		firstDevice.getMos().forEach(mo -> {
 			mo.getIndicators().forEach(indicator -> {
-				if(indicator.getName().equals("CPU") || indicator.getName().equals("MEM")){
+				if (indicator.getName().equals("CPU") || indicator.getName().equals("MEM")) {
 					multiTask01.getIndicators().add(indicator);
 				}
 			});
 		});
-        firstDevice.getMultiIndicatorTasks().add(multiTask01);
-
+		firstDevice.getMultiIndicatorTasks().add(multiTask01);
 
 		actorSystem.actorSelection("/user/supervisor/").tell(new Supervisor.DeviceInfo(devices), ActorRef.noSender());
 
@@ -161,9 +164,9 @@ public class JobTestServiceImpl implements JobTestService {
 						pdmJob.addConTrigger(task.getName(), task.getCronExpression());
 					});
 
-					try{
+					try {
 						jobService.registerJob(pdmJob);
-					}catch(Exception ex){
+					} catch (Exception ex) {
 						ex.printStackTrace();
 					}
 
@@ -172,7 +175,6 @@ public class JobTestServiceImpl implements JobTestService {
 
 		});
 	}
-
 
 	/*
 	 * 添加一个动态的JOB

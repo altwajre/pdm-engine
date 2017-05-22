@@ -1,6 +1,7 @@
 package cn.betasoft.pdm.engine.actor;
 
 import akka.actor.*;
+
 import cn.betasoft.pdm.engine.config.akka.ActorBean;
 import cn.betasoft.pdm.engine.config.akka.AkkaProperties;
 import cn.betasoft.pdm.engine.config.akka.SpringProps;
@@ -8,10 +9,12 @@ import cn.betasoft.pdm.engine.event.PdmEventBusImpl;
 import cn.betasoft.pdm.engine.event.PdmMsgEnvelope;
 import cn.betasoft.pdm.engine.exception.DataCollectTimeOut;
 import cn.betasoft.pdm.engine.model.Indicator;
-import cn.betasoft.pdm.engine.monitor.LogExecutionTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.springframework.beans.factory.annotation.Autowired;
+
+import scala.concurrent.duration.Duration;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -62,7 +65,6 @@ public class CollectDataActor extends AbstractActor {
 
 	@Override
 	public void preStart() {
-		logger.info("preStart,indicator is:" + indicator.getName());
 		this.scheduledFireTime = new Date();
 		Props props = SpringProps.create(actorSystem, HttpGetDataActor.class, null)
 				.withDispatcher(akkaProperties.getWorkDispatch());
@@ -93,7 +95,7 @@ public class CollectDataActor extends AbstractActor {
 			fireCalendar.set(Calendar.MILLISECOND, 0);
 
 			if (fireCalendar.after(collectCalendar)) {
-				logger.info("task time is {} ,start collect...", sdf.format(collect.getScheduledFireTime()));
+				logger.info("indicator name is {},task time is {} ,start collect...", indicator.getName(),sdf.format(collect.getScheduledFireTime()));
 
 				this.scheduledFireTime = collect.getScheduledFireTime();
 
@@ -105,7 +107,8 @@ public class CollectDataActor extends AbstractActor {
 						sdf.format(collect.getScheduledFireTime()));
 			}
 		}).match(SingleIndicatorTaskActor.Result.class, result -> {
-			logger.info("result [value] {}", result.getValue());
+			logger.info("result...task name is{}, time is {},[value] {}", indicator.getName(),sdf.format(result.getScheduledFireTime()),result.getValue());
+
 			this.getContext().actorSelection("../st-*").tell(result, this.getSender());
 
 			// 把消息发送给消息队列，以便综合指标处理actor使用
