@@ -16,7 +16,7 @@ public class ExceptionMonitorActor extends AbstractActor {
 	@Override
 	public Receive createReceive() {
 		return receiveBuilder().match(ExceptionInfo.class, info -> {
-			logger.info("exception method: {}, arguments: {},message: {},stack {}", info.getMethodName(),
+			logger.debug("exception method: {}, arguments: {},message: {},stack {}", info.getMethodName(),
 					info.getArguments(), info.getMessage(), info.getStack());
 		}).matchAny(o -> {
 			logger.info("received unknown message");

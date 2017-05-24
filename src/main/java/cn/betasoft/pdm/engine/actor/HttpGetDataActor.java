@@ -73,7 +73,7 @@ public class HttpGetDataActor extends AbstractActor {
 
 	@FutureLogExecutionTime
 	private SingleIndicatorTaskActor.Result httpGetHandler(HttpGetData httpGetData){
-		logger.info("command is {},task time is {} ,http collect start...", httpGetData.getCommand(),
+		logger.debug("command is {},task time is {} ,http collect start...", httpGetData.getCommand(),
 				sdf.format(httpGetData.scheduledFireTime));
 		Random random = new Random();
 		int sleepTime = 100 + random.nextInt(1000);
@@ -87,7 +87,7 @@ public class HttpGetDataActor extends AbstractActor {
 		SingleIndicatorTaskActor.Result result = new SingleIndicatorTaskActor.Result(
 				httpGetData.getScheduledFireTime(), value);
 
-		logger.info("command is {},task time is {} ,http collect finish...", httpGetData.getCommand(),
+		logger.debug("command is {},task time is {} ,http collect finish...", httpGetData.getCommand(),
 				sdf.format(httpGetData.scheduledFireTime));
 		return result;
 	}

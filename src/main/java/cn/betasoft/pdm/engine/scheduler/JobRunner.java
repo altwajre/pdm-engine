@@ -33,7 +33,7 @@ public class JobRunner implements Job {
 		actorSystem.actorSelection(collectActorPath).tell(new CollectDataActor.Collect(context.getScheduledFireTime()),
 				ActorRef.noSender());
 
-		logger.info("[jobKey]" + jobKey + ",[triggerKey]" + triggerKey + ",[execute time]" + sdf.format(new Date())
+		logger.debug("[jobKey]" + jobKey + ",[triggerKey]" + triggerKey + ",[execute time]" + sdf.format(new Date())
 				+ ",[scheduler time]" + sdf.format(context.getScheduledFireTime())+ ",[fire time]" + sdf.format(context.getFireTime()));
 	}
 }

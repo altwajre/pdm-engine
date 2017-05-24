@@ -76,6 +76,7 @@
 		<dependency>
 			<groupId>org.springframework.kafka</groupId>
 			<artifactId>spring-kafka</artifactId>
+			<version>1.2.1.RELEASE</version>
 		</dependency>
 
 		<dependency>

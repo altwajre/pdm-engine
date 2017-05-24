@@ -67,6 +67,12 @@ public class MonitorSupervisor extends AbstractActor {
 		}
 	}
 
+	static public class CreateKafkaProduce {
+
+		public CreateKafkaProduce() {
+		}
+	}
+
 	@Autowired
 	private ActorSystem actorSystem;
 
@@ -84,6 +90,8 @@ public class MonitorSupervisor extends AbstractActor {
 	private ActorRef deadLetterMonitorActorRef;
 
 	private ActorRef exceptionMonitorActorRef;
+
+	private ActorRef kafkaProduceActorRef;
 
 	private ExecutionContext ec;
 
@@ -156,6 +164,11 @@ public class MonitorSupervisor extends AbstractActor {
 			exceptionMonitorActorRef = this.getContext().actorOf(props, "exceptionMonitor");
 			this.getContext().watch(exceptionMonitorActorRef);
 			actorSystem.eventStream().subscribe(exceptionMonitorActorRef, ExceptionInfo.class);
+		}).match(CreateKafkaProduce.class, kafkaProduce -> {
+			Props props = SpringProps.create(actorSystem, KafkaProduceActor.class, null)
+					.withDispatcher(akkaProperties.getMonitorDispatch());
+			kafkaProduceActorRef = this.getContext().actorOf(props, "kafkaProduce");
+			this.getContext().watch(kafkaProduceActorRef);
 		}).build();
 	}
 }

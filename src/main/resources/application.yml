@@ -45,12 +45,18 @@ quartz:
       tablePrefix: qrtz_
 
 akka:
-  config: akka.conf
-  systemName: pdmActorSystem
-  actorBeanClass: cn.betasoft.pdm.engine.actor.Supervisor
-  actorName: supervisor
-  pinnedDispatcher: pdm-pinned-dispatcher
-  workDispatch: pdm-work-dispatcher
-  futureDispatch: pdm-future-dispatcher
-  monitorDispatch: pdm-monitor-dispatcher
+    config: akka.conf
+    systemName: pdmActorSystem
+    actorBeanClass: cn.betasoft.pdm.engine.actor.Supervisor
+    actorName: supervisor
+    pinnedDispatcher: pdm-pinned-dispatcher
+    workDispatch: pdm-work-dispatcher
+    futureDispatch: pdm-future-dispatcher
+    monitorDispatch: pdm-monitor-dispatcher
+
+kafka:
+    bootstrap:
+        servers:
+            - localhost:9092
+
 

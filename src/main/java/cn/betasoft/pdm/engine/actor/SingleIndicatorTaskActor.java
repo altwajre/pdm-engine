@@ -114,7 +114,7 @@ public class SingleIndicatorTaskActor extends AbstractActor {
 						"receive result,task name is: {}, task type is: {}, schedulerTime is: {} in holiday,value is:{}",
 						task.getName(), task.getType(), sdf.format(result.getScheduledFireTime()), result.getValue());
 			} else {
-				logger.info(
+				logger.debug(
 						"receive result in cron,indicator is {},task name is: {},key is: {}, type is: {}, schedulerTime is: {} ,value is:{}",
 						task.getIndicator().getName(), task.getName(), task.getKey(), task.getType(),
 						sdf.format(result.getScheduledFireTime()), result.getValue());
@@ -129,7 +129,7 @@ public class SingleIndicatorTaskActor extends AbstractActor {
 					} catch (Exception ex) {
 						ex.printStackTrace();
 					}
-					logger.info(resultQueue.size() + ">>>>>>>>>>>>>>>>>>>excute finish>>>>>>>>>>>>>>>>>>>>>>");
+					logger.debug(resultQueue.size() + ">>>>>>>>>>>>>>>>>>>excute finish>>>>>>>>>>>>>>>>>>>>>>");
 
 				}
 			}

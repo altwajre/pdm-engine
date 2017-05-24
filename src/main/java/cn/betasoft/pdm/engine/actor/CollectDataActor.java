@@ -95,7 +95,7 @@ public class CollectDataActor extends AbstractActor {
 			fireCalendar.set(Calendar.MILLISECOND, 0);
 
 			if (fireCalendar.after(collectCalendar)) {
-				logger.info("indicator name is {},task time is {} ,start collect...", indicator.getName(),sdf.format(collect.getScheduledFireTime()));
+				logger.debug("indicator name is {},task time is {} ,start collect...", indicator.getName(),sdf.format(collect.getScheduledFireTime()));
 
 				this.scheduledFireTime = collect.getScheduledFireTime();
 
@@ -103,11 +103,11 @@ public class CollectDataActor extends AbstractActor {
 						collect.getScheduledFireTime(), indicator.getName());
 				httpGetDataActorRef.tell(httpGetData, self());
 			} else {
-				logger.info("current time is {},and task time is {},discard....", sdf.format(this.scheduledFireTime),
+				logger.debug("current time is {},and task time is {},discard....", sdf.format(this.scheduledFireTime),
 						sdf.format(collect.getScheduledFireTime()));
 			}
 		}).match(SingleIndicatorTaskActor.Result.class, result -> {
-			logger.info("result...task name is{}, time is {},[value] {}", indicator.getName(),sdf.format(result.getScheduledFireTime()),result.getValue());
+			logger.debug("result...task name is{}, time is {},[value] {}", indicator.getName(),sdf.format(result.getScheduledFireTime()),result.getValue());
 
 			this.getContext().actorSelection("../st-*").tell(result, this.getSender());
 
@@ -119,9 +119,9 @@ public class CollectDataActor extends AbstractActor {
 			pdmEventBusImpl.publish(new PdmMsgEnvelope(sb.toString(), result));
 		}).match(Status.Failure.class, f -> {
 			DataCollectTimeOut exception = (DataCollectTimeOut) f.cause();
-			logger.info("timeout........" + exception.getMessage());
+			logger.debug("timeout........" + exception.getMessage());
 		}).matchAny(o -> {
-			logger.info("received unknown message" + o.getClass());
+			logger.debug("received unknown message" + o.getClass());
 		}).build();
 	}
 

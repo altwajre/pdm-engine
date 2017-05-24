@@ -39,5 +39,6 @@ public class MonitorService {
 		monitorSupervisor.tell(new MonitorSupervisor.CreateHeapMonitor(), ActorRef.noSender());
 		monitorSupervisor.tell(new MonitorSupervisor.CreateDeadLetterMonitor(), ActorRef.noSender());
 		monitorSupervisor.tell(new MonitorSupervisor.CreateExceptionMonitor(), ActorRef.noSender());
+		monitorSupervisor.tell(new MonitorSupervisor.CreateKafkaProduce(), ActorRef.noSender());
 	}
 }

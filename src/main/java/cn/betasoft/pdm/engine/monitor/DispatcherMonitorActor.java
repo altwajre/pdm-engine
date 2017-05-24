@@ -54,7 +54,7 @@ public class DispatcherMonitorActor extends AbstractActor {
 	@Override
 	public Receive createReceive() {
 		return receiveBuilder().matchEquals("Tick", m -> {
-			logger.info(
+			logger.debug(
 					">>>>>>>>>>>>>>>>>>>>>>{},Parallelism : {} , Active Threads : {},Task Count : {}, pool size: {},running thread count: {}, queue submission count: {}",
 					dispatcherName, forkJoinPool.getParallelism(), forkJoinPool.getActiveThreadCount(),
 					forkJoinPool.getQueuedTaskCount(), forkJoinPool.getPoolSize(), forkJoinPool.getRunningThreadCount(),

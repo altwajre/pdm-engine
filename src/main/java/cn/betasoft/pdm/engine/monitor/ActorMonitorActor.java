@@ -24,7 +24,7 @@ public class ActorMonitorActor extends AbstractActor {
 	@Override
 	public Receive createReceive() {
 		return receiveBuilder().match(ActorStatistics.class, statistics -> {
-			logger.info(
+			logger.debug(
 					"************************ actor statistics, actor is : {}, method is {}, entry time is {}, run time is: {}",
 					statistics.getReceiver(), statistics.getMethodName(),sdf.format(new Date(statistics.getEntryTime())),
 					statistics.getTotalTimeMillis());
