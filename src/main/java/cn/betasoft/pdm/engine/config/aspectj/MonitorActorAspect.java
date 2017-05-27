@@ -4,6 +4,7 @@ import akka.actor.AbstractActor;
 import cn.betasoft.pdm.engine.exception.InaccessablePointcutAnnotationException;
 import cn.betasoft.pdm.engine.model.ExceptionInfo;
 import cn.betasoft.pdm.engine.perf.actor.ActorStatistics;
+import cn.betasoft.pdm.engine.perf.actor.ActorStatisticsType;
 import com.google.common.base.Stopwatch;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -17,12 +18,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import akka.actor.ActorSystem;
-import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 @Aspect
@@ -49,7 +48,7 @@ public class MonitorActorAspect {
 		sw.stop();
 		AbstractActor actor = (AbstractActor) joinPoint.getTarget();
 		ActorStatistics stat = new ActorStatistics(actor.getSelf().toString(), actor.getSender().toString(),
-				methodName, start, sw.elapsed(TimeUnit.MILLISECONDS));
+				methodName, start, sw.elapsed(TimeUnit.MILLISECONDS),ActorStatisticsType.NORMAL);
 		system.eventStream().publish(stat);
 	}
 
@@ -69,7 +68,7 @@ public class MonitorActorAspect {
 			sw.stop();
 			AbstractActor actor = (AbstractActor) joinPoint.getTarget();
 			ActorStatistics stat = new ActorStatistics(actor.getSelf().toString(), actor.getSender().toString(),
-					methodName, start, sw.elapsed(TimeUnit.MILLISECONDS));
+					methodName, start, sw.elapsed(TimeUnit.MILLISECONDS), ActorStatisticsType.NORMAL);
 			system.eventStream().publish(stat);
 		}
 	}

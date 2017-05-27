@@ -65,7 +65,7 @@ public class HeapInfoListener extends Thread {
 					MonitorMessage monitorMessage = new MonitorMessage(MonitorType.HEAP, record.value());
 					String value = objectMapper.writeValueAsString(monitorMessage);
 					monitorMsgSend.sendMessage(value);
-					logger.info("offset = {}, key = {}, value = {}", record.offset(), record.key(), record.value());
+					//logger.info("offset = {}, key = {}, value = {}", record.offset(), record.key(), record.value());
 				} catch (Exception ex) {
 					logger.info("parse heap info error", ex);
 				}

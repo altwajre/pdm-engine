@@ -3,7 +3,7 @@
 
     <!-- Add this argument to options to make AspectJ logs use the Spring logging framework. -->
     <!-- -XmessageHandlerClass:org.springframework.aop.aspectj.AspectJWeaverMessageHandler -->
-    <weaver options="-verbose -showWeaveInfo">
+    <weaver options="-verbose">
         <!--
             Only weave classes in our application-specific packages.
             This should encompass any class that wants to utilize the aspects,

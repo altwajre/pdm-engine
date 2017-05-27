@@ -9,6 +9,8 @@ import cn.betasoft.pdm.engine.event.PdmEventBusImpl;
 import cn.betasoft.pdm.engine.event.PdmMsgEnvelope;
 import cn.betasoft.pdm.engine.exception.DataCollectTimeOut;
 import cn.betasoft.pdm.engine.model.Indicator;
+import cn.betasoft.pdm.engine.perf.actor.ActorStatistics;
+import cn.betasoft.pdm.engine.perf.actor.ActorStatisticsType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +22,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 通过指标参数，采集指标的值
@@ -119,6 +122,9 @@ public class CollectDataActor extends AbstractActor {
 			pdmEventBusImpl.publish(new PdmMsgEnvelope(sb.toString(), result));
 		}).match(Status.Failure.class, f -> {
 			DataCollectTimeOut exception = (DataCollectTimeOut) f.cause();
+			ActorStatistics stat = new ActorStatistics(this.getSelf().toString(), this.getSender().toString(),
+					"", new Date().getTime(), 2000l, ActorStatisticsType.TIMEOUT);
+			this.actorSystem.eventStream().publish(stat);
 			logger.debug("timeout........" + exception.getMessage());
 		}).matchAny(o -> {
 			logger.debug("received unknown message" + o.getClass());

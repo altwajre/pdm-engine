@@ -5,8 +5,10 @@ import static java.time.temporal.ChronoUnit.MINUTES;
 import java.time.Instant;
 import java.util.*;
 
+import cn.betasoft.pdm.engine.monitor.stream.CollectDataStream;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.serialization.StringDeserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,11 +18,9 @@ import cn.betasoft.pdm.engine.model.monitor.MonitorMessage;
 import cn.betasoft.pdm.engine.model.monitor.MonitorType;
 import cn.betasoft.pdm.engine.monitor.websocket.MonitorMsgSend;
 
-public class DispatcherInfoListener extends Thread {
+public class CollectStatListener extends Thread {
 
 	private Properties kafkaConsumerProperties;
-
-	private String name;
 
 	private KafkaConsumer<String, String> consumer;
 
@@ -28,12 +28,13 @@ public class DispatcherInfoListener extends Thread {
 
 	private static final String GROUP = "monitor";
 
+	private static final String TOPIC = "collectStat";
+
 	private static final int OFFSETMINUTE = 5;
 
-	private static final Logger logger = LoggerFactory.getLogger(DispatcherInfoListener.class);
+	private static final Logger logger = LoggerFactory.getLogger(CollectStatListener.class);
 
-	public DispatcherInfoListener(String name, Properties kafkaConsumerProperties, MonitorMsgSend monitorMsgSend) {
-		this.name = name;
+	public CollectStatListener(Properties kafkaConsumerProperties, MonitorMsgSend monitorMsgSend) {
 		this.kafkaConsumerProperties = kafkaConsumerProperties;
 		this.monitorMsgSend = monitorMsgSend;
 		createConsumer();
@@ -64,11 +65,10 @@ public class DispatcherInfoListener extends Thread {
 			for (ConsumerRecord<String, String> record : records) {
 				try {
 					ObjectMapper objectMapper = new ObjectMapper();
-					MonitorType monitorType = MonitorType.getByName(name);
-					MonitorMessage monitorMessage = new MonitorMessage(monitorType, record.value());
+					MonitorMessage monitorMessage = new MonitorMessage(MonitorType.COLLECTSTAT, record.value());
 					String value = objectMapper.writeValueAsString(monitorMessage);
 					monitorMsgSend.sendMessage(value);
-					//logger.info("offset = {}, key = {}, value = {}", record.offset(), record.key(), record.value());
+					logger.info("offset = {}, key = {}, value = {}", record.offset(), record.key(), record.value());
 				} catch (Exception ex) {
 					logger.info("parse heap info error", ex);
 				}
@@ -86,6 +86,6 @@ public class DispatcherInfoListener extends Thread {
 	private void createConsumer() {
 		kafkaConsumerProperties.put(ConsumerConfig.GROUP_ID_CONFIG, GROUP);
 		consumer = new KafkaConsumer<>(kafkaConsumerProperties);
-		consumer.subscribe(Arrays.asList(name));
+		consumer.subscribe(Arrays.asList(TOPIC));
 	}
 }

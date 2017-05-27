@@ -1,5 +1,6 @@
 package cn.betasoft.pdm.engine.controller;
 
+import cn.betasoft.pdm.engine.model.monitor.CollectStat;
 import cn.betasoft.pdm.engine.model.monitor.DispatcherInfo;
 import cn.betasoft.pdm.engine.model.monitor.HeapInfo;
 import cn.betasoft.pdm.engine.monitor.HeapMonitorActor;
@@ -23,19 +24,28 @@ public class MonitorController {
 
 	@RequestMapping(value = "/heap/query/{offsetMinute}", method = RequestMethod.GET)
 	@ResponseStatus(value = HttpStatus.OK)
-	public @ResponseBody List<HeapInfo> query(@PathVariable int offsetMinute) {
+	public @ResponseBody List<HeapInfo> queryHeapInfo(@PathVariable int offsetMinute) {
 		return monitorQueryService.queryHeap(offsetMinute);
 	}
 
 	/**
 	 *
-	 * @param name "akka.actor.default-dispatcher", "pdm-work-dispatcher","pdm-future-dispatcher"
+	 * @param name
+	 *            "akka.actor.default-dispatcher",
+	 *            "pdm-work-dispatcher","pdm-future-dispatcher"
 	 * @param offsetMinute
 	 * @return
 	 */
 	@RequestMapping(value = "/dispatcher/{name}/query/{offsetMinute}", method = RequestMethod.GET)
 	@ResponseStatus(value = HttpStatus.OK)
-	public @ResponseBody List<DispatcherInfo> query(@PathVariable String name, @PathVariable int offsetMinute) {
+	public @ResponseBody List<DispatcherInfo> queryDispatcherInfo(@PathVariable String name,
+			@PathVariable int offsetMinute) {
 		return monitorQueryService.queryDispatcher(name, offsetMinute);
+	}
+
+	@RequestMapping(value = "/collectStat/query/{offsetMinute}", method = RequestMethod.GET)
+	@ResponseStatus(value = HttpStatus.OK)
+	public @ResponseBody List<CollectStat> queryCollectStat(@PathVariable int offsetMinute) {
+		return monitorQueryService.queryCollectStat(offsetMinute);
 	}
 }

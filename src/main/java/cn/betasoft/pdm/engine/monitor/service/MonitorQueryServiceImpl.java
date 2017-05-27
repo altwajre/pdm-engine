@@ -1,7 +1,9 @@
 package cn.betasoft.pdm.engine.monitor.service;
 
+import cn.betasoft.pdm.engine.model.monitor.CollectStat;
 import cn.betasoft.pdm.engine.model.monitor.DispatcherInfo;
 import cn.betasoft.pdm.engine.model.monitor.HeapInfo;
+import cn.betasoft.pdm.engine.monitor.query.CollectStatQuery;
 import cn.betasoft.pdm.engine.monitor.query.DispatcherInfoQuery;
 import cn.betasoft.pdm.engine.monitor.query.HeapInfoQuery;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,20 +16,31 @@ import java.util.Properties;
 import static java.time.temporal.ChronoUnit.MINUTES;
 
 @Service
-public class MonitorQueryServiceImpl implements MonitorQueryService{
+public class MonitorQueryServiceImpl implements MonitorQueryService {
 
 	@Autowired
 	private Properties kafkaConsumerProperties;
 
-	@Override public List<HeapInfo> queryHeap(int offsetMinute) {
+	@Override
+	public List<HeapInfo> queryHeap(int offsetMinute) {
 		long offsetTime = Instant.now().minus(offsetMinute, MINUTES).toEpochMilli();
-		HeapInfoQuery heapQuery = new HeapInfoQuery("heapQuery","heap",offsetTime,kafkaConsumerProperties);
+		HeapInfoQuery heapQuery = new HeapInfoQuery("heapQuery", "heap", offsetTime, kafkaConsumerProperties);
 		return heapQuery.query();
 	}
 
-	@Override public List<DispatcherInfo> queryDispatcher(String dispatcherName, int offsetMinute) {
+	@Override
+	public List<DispatcherInfo> queryDispatcher(String dispatcherName, int offsetMinute) {
 		long offsetTime = Instant.now().minus(offsetMinute, MINUTES).toEpochMilli();
-		DispatcherInfoQuery dispatcherInfoQuery = new DispatcherInfoQuery(dispatcherName+"Query",dispatcherName,offsetTime,kafkaConsumerProperties);
+		DispatcherInfoQuery dispatcherInfoQuery = new DispatcherInfoQuery(dispatcherName + "Query", dispatcherName,
+				offsetTime, kafkaConsumerProperties);
 		return dispatcherInfoQuery.query();
+	}
+
+	@Override
+	public List<CollectStat> queryCollectStat(int offsetMinute) {
+		long offsetTime = Instant.now().minus(offsetMinute, MINUTES).toEpochMilli();
+		CollectStatQuery collectStatQuery = new CollectStatQuery("collectStatQuery", "collectStat", offsetTime,
+				kafkaConsumerProperties);
+		return collectStatQuery.query();
 	}
 }
