@@ -76,7 +76,7 @@ public class HttpGetDataActor extends AbstractActor {
 		logger.debug("command is {},task time is {} ,http collect start...", httpGetData.getCommand(),
 				sdf.format(httpGetData.scheduledFireTime));
 		Random random = new Random();
-		int sleepTime = 100 + random.nextInt(1000);
+		int sleepTime = 500 + random.nextInt(100);
 		try {
 			Thread.sleep(sleepTime);
 		} catch (Exception ex) {

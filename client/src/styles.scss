@@ -1,0 +1,15 @@
+@import 'variables';
+@import '../node_modules/bootstrap/scss/bootstrap';
+@import '../node_modules/font-awesome/scss/font-awesome';
+
+body {
+    font-family: "Lato", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.42857143;
+    color: #ffffff;
+    background-color: #222222;
+}
+
+.bg-inverse {
+    background-color: #375a7f !important;
+}

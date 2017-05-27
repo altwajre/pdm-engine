@@ -1,5 +1,6 @@
 package cn.betasoft.pdm.engine.controller;
 
+import cn.betasoft.pdm.engine.model.monitor.DispatcherInfo;
 import cn.betasoft.pdm.engine.model.monitor.HeapInfo;
 import cn.betasoft.pdm.engine.monitor.HeapMonitorActor;
 import cn.betasoft.pdm.engine.monitor.service.MonitorQueryService;
@@ -12,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("monitor")
+@RequestMapping("api/monitor")
 public class MonitorController {
 
 	@Autowired
@@ -24,5 +25,17 @@ public class MonitorController {
 	@ResponseStatus(value = HttpStatus.OK)
 	public @ResponseBody List<HeapInfo> query(@PathVariable int offsetMinute) {
 		return monitorQueryService.queryHeap(offsetMinute);
+	}
+
+	/**
+	 *
+	 * @param name "akka.actor.default-dispatcher", "pdm-work-dispatcher","pdm-future-dispatcher"
+	 * @param offsetMinute
+	 * @return
+	 */
+	@RequestMapping(value = "/dispatcher/{name}/query/{offsetMinute}", method = RequestMethod.GET)
+	@ResponseStatus(value = HttpStatus.OK)
+	public @ResponseBody List<DispatcherInfo> query(@PathVariable String name, @PathVariable int offsetMinute) {
+		return monitorQueryService.queryDispatcher(name, offsetMinute);
 	}
 }

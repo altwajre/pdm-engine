@@ -42,7 +42,7 @@ public class JobTestServiceImpl implements JobTestService {
 		// 不能包括中文
 		String[] indicatorNames = { "PING", "CPU", "MEM", "DISK", "PORT" };
 
-		for (int i = 0; i < 1; i++) {
+		for (int i = 0; i < 100; i++) {
 			Device device = new Device();
 			device.setIp("138.174.65." + i);
 			device.setName("device-" + i);
@@ -96,10 +96,10 @@ public class JobTestServiceImpl implements JobTestService {
 
 						int[] days = { CronWeekdays.SATURDAY.getWeekday(), CronWeekdays.SUNDAY.getWeekday() };
 						String holidayCronExrepsstion = HolidayCronBuilder.INSTANCE.buildWeeklyCron(days);
-						task.getHolidayCronExrpessions().add(holidayCronExrepsstion);
+						//task.getHolidayCronExrpessions().add(holidayCronExrepsstion);
 
 						String todayExrepsstion = "0 0-4 17 * * ?";
-						task.getHolidayCronExrpessions().add(todayExrepsstion);
+						//task.getHolidayCronExrpessions().add(todayExrepsstion);
 
 						Random cronRandom = new Random();
 						int cronNum = cronRandom.nextInt(7);

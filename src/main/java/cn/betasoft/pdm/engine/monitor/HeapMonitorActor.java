@@ -4,6 +4,8 @@ import akka.actor.AbstractActor;
 import akka.actor.ActorSystem;
 import cn.betasoft.pdm.engine.config.akka.ActorBean;
 import cn.betasoft.pdm.engine.model.monitor.HeapInfo;
+import cn.betasoft.pdm.engine.model.monitor.MonitorMessage;
+import cn.betasoft.pdm.engine.model.monitor.MonitorType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,6 +45,7 @@ public class HeapMonitorActor extends AbstractActor {
 
 			ObjectMapper objectMapper = new ObjectMapper();
 			String value = objectMapper.writeValueAsString(heapInfo);
+
 			actorSystem.actorSelection("/user/monitorSupervisor/kafkaProduce")
 					.tell(new KafkaProduceActor.MonitorMessage("heap", "", value), this.getSelf());
 		}).matchAny(o -> logger.info("received unknown message")).build();

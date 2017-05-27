@@ -110,7 +110,7 @@ public class SingleIndicatorTaskActor extends AbstractActor {
 		if (fireCronExpression.isSatisfiedBy(schedulerFireTime)) {
 			boolean isHoliday = inHoliday(schedulerFireTime);
 			if (isHoliday) {
-				logger.info(
+				logger.debug(
 						"receive result,task name is: {}, task type is: {}, schedulerTime is: {} in holiday,value is:{}",
 						task.getName(), task.getType(), sdf.format(result.getScheduledFireTime()), result.getValue());
 			} else {

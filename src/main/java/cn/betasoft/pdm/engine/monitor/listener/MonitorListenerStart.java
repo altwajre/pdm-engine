@@ -1,5 +1,6 @@
 package cn.betasoft.pdm.engine.monitor.listener;
 
+import cn.betasoft.pdm.engine.monitor.websocket.MonitorMsgSend;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,21 +21,34 @@ public class MonitorListenerStart {
 	@Autowired
 	private Properties kafkaConsumerProperties;
 
+	@Autowired
+	private MonitorMsgSend monitorMsgSend;
+
 	private List<Thread> consumers = new ArrayList<>();
 
 	private ExecutorService executor = Executors.newCachedThreadPool();
 
+	private String[] dispatcherNames = { "akka.actor.default-dispatcher", "pdm-work-dispatcher",
+			"pdm-future-dispatcher" };
+
 	private static final Logger logger = LoggerFactory.getLogger(MonitorListenerStart.class);
 
-	public MonitorListenerStart(){
+	public MonitorListenerStart() {
 
 	}
 
 	@PostConstruct
-	public void start(){
-		Thread heapInfoListener = new HeapInfoListener(kafkaConsumerProperties);
+	public void start() {
+		Thread heapInfoListener = new HeapInfoListener(kafkaConsumerProperties, monitorMsgSend);
 		consumers.add(heapInfoListener);
 		executor.submit(heapInfoListener);
+
+		for (String dispatcherName : dispatcherNames) {
+			Thread dispatcherInfoListener = new DispatcherInfoListener(dispatcherName, kafkaConsumerProperties,
+					monitorMsgSend);
+			consumers.add(dispatcherInfoListener);
+			executor.submit(dispatcherInfoListener);
+		}
 	}
 
 	@PreDestroy

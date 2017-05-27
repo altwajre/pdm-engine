@@ -6,11 +6,14 @@ import akka.dispatch.Dispatcher;
 import akka.dispatch.ExecutorServiceDelegate;
 import akka.dispatch.forkjoin.ForkJoinPool;
 import cn.betasoft.pdm.engine.config.akka.ActorBean;
+import cn.betasoft.pdm.engine.model.monitor.DispatcherInfo;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Optional;
 
 @ActorBean
@@ -54,11 +57,36 @@ public class DispatcherMonitorActor extends AbstractActor {
 	@Override
 	public Receive createReceive() {
 		return receiveBuilder().matchEquals("Tick", m -> {
-			logger.debug(
-					">>>>>>>>>>>>>>>>>>>>>>{},Parallelism : {} , Active Threads : {},Task Count : {}, pool size: {},running thread count: {}, queue submission count: {}",
-					dispatcherName, forkJoinPool.getParallelism(), forkJoinPool.getActiveThreadCount(),
-					forkJoinPool.getQueuedTaskCount(), forkJoinPool.getPoolSize(), forkJoinPool.getRunningThreadCount(),
-					forkJoinPool.getQueuedSubmissionCount());
+			long parallelism = forkJoinPool.getParallelism();
+			long activeThreadCount = forkJoinPool.getActiveThreadCount();
+			long queuedTaskCount = forkJoinPool.getQueuedTaskCount();
+			long poolSize = forkJoinPool.getPoolSize();
+			long runningThreadCount = forkJoinPool.getRunningThreadCount();
+			long queuedSubmissionCount = forkJoinPool.getQueuedSubmissionCount();
+
+			DispatcherInfo info = new DispatcherInfo();
+			info.setSampleTime(new Date());
+			info.setParallelism(parallelism);
+			info.setActiveThreadCount(activeThreadCount);
+			info.setQueuedTaskCount(queuedTaskCount);
+			info.setPoolSize(poolSize);
+			info.setRunningThreadCount(runningThreadCount);
+			info.setQueuedSubmissionCount(queuedSubmissionCount);
+
+			ObjectMapper objectMapper = new ObjectMapper();
+			String value = objectMapper.writeValueAsString(info);
+
+			actorSystem.actorSelection("/user/monitorSupervisor/kafkaProduce").tell(
+					new KafkaProduceActor.MonitorMessage(dispatcherName, "", value),
+					this.getSelf());
+
+			if (logger.isDebugEnabled()) {
+				logger.debug(
+						">>>>>>>>>>>>>>>>>>>>>>{},Parallelism : {} , Active Threads : {},Task Count : {}, pool size: {},running thread count: {}, queue submission count: {}",
+						dispatcherName, forkJoinPool.getParallelism(), forkJoinPool.getActiveThreadCount(),
+						forkJoinPool.getQueuedTaskCount(), forkJoinPool.getPoolSize(),
+						forkJoinPool.getRunningThreadCount(), forkJoinPool.getQueuedSubmissionCount());
+			}
 		}).matchAny(o -> logger.info("received unknown message")).build();
 	}
 }

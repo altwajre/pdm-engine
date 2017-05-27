@@ -37,7 +37,7 @@ public class HeapInfoQuery {
 		List<HeapInfo> infos = new ArrayList<>();
 
 		try {
-			ConsumerRecords<String, String> records = consumer.poll(100);
+			ConsumerRecords<String, String> records = consumer.poll(500);
 			Set<TopicPartition> assignments = consumer.assignment();
 			Map<TopicPartition, Long> query = new HashMap<>();
 			for (TopicPartition topicPartition : assignments) {
@@ -53,7 +53,6 @@ public class HeapInfoQuery {
 				ObjectMapper objectMapper = new ObjectMapper();
 				HeapInfo heapInfo = objectMapper.readValue(record.value(), HeapInfo.class);
 				infos.add(heapInfo);
-				logger.info("offset = {},{}", record.offset(), record.key(), heapInfo.toString());
 			}
 		} catch (Exception ex) {
 			logger.info("query heap info error", ex);
