@@ -17,6 +17,10 @@ public class ActorStatistics {
 	@JsonFormat(shape = JsonFormat.Shape.NUMBER_INT)
 	private ActorStatisticsType type;
 
+	public ActorStatistics(){
+
+	}
+	
 	public ActorStatistics(String receiver, String sender, String methodName, long entryTime, long totalTimeMillis,
 			ActorStatisticsType type) {
 		this.receiver = receiver;
