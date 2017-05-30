@@ -1,8 +1,9 @@
 package cn.betasoft.pdm.engine.monitor.stream;
 
 import cn.betasoft.pdm.engine.config.kafka.KafkaProperties;
-import cn.betasoft.pdm.engine.model.monitor.CollectStat;
-import cn.betasoft.pdm.engine.perf.actor.ActorStatistics;
+import cn.betasoft.pdm.engine.model.monitor.MailBoxStat;
+import cn.betasoft.pdm.engine.perf.mailbox.MailboxStatistics;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsConfig;
@@ -16,31 +17,32 @@ import javax.annotation.PostConstruct;
 import java.util.Properties;
 
 @Component
-public class CollectDataStream {
+public class MailBoxStream {
 
 	@Autowired
 	private KafkaProperties kafkaProperties;
 
-	public CollectDataStream() {
+	public MailBoxStream() {
 
 	}
 
 	@PostConstruct
 	public void init() {
 		Properties kafkaProps = creatPproperties();
-		kafkaProps.put(StreamsConfig.APPLICATION_ID_CONFIG, "collectStat");
-		kafkaProps.put(StreamsConfig.VALUE_SERDE_CLASS_CONFIG, CollectDataSerde.class.getName());
+		kafkaProps.put(StreamsConfig.APPLICATION_ID_CONFIG, "mailboxStat");
+		kafkaProps.put(StreamsConfig.VALUE_SERDE_CLASS_CONFIG, MailboxStatisticsSerde.class.getName());
 		kafkaProps.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, "20000");
-		KStreamBuilder builder = new KStreamBuilder();
-		KStream<String, ActorStatistics> source = builder.stream("collectData");
 
-		KStream<TickerWindow, CollectStat> stats = source.groupByKey()
-				.aggregate(CollectStat::new, (k, v, collectstats) -> collectstats.add(v),
-						TimeWindows.of(10*1000L).until(10*1000L), new CollectStatSerde(), "collect-stats-store")
-				.toStream((key, value) -> new TickerWindow("collectData", key.window().start()))
+		KStreamBuilder builder = new KStreamBuilder();
+		KStream<String, MailboxStatistics> source = builder.stream("mailboxData");
+
+		KStream<TickerWindow, MailBoxStat> stats = source.groupByKey()
+				.aggregate(MailBoxStat::new, (k, v, collectstats) -> collectstats.add(v),
+						TimeWindows.of(10*1000L).until(10*1000L), new MailBoxStatSerde(), "mailbox-stats-store")
+				.toStream((key, value) -> new TickerWindow("mailboxData", key.window().start()))
 				.mapValues((collectStat) -> (collectStat.computeAvgTime()));
 
-		stats.to(new TickerWindowSerde(), new CollectStatSerde(), "collectStat");
+		stats.to(new TickerWindowSerde(), new MailBoxStatSerde(), "mailboxStat");
 
 		KafkaStreams streams = new KafkaStreams(builder, kafkaProps);
 
@@ -57,15 +59,15 @@ public class CollectDataStream {
 		return kafkaProps;
 	}
 
-	static public final class CollectDataSerde extends WrapperSerde<ActorStatistics> {
-		public CollectDataSerde() {
-			super(ActorStatistics.class);
+	static public final class MailboxStatisticsSerde extends WrapperSerde<MailboxStatistics> {
+		public MailboxStatisticsSerde() {
+			super(MailboxStatistics.class);
 		}
 	}
 
-	static public final class CollectStatSerde extends WrapperSerde<CollectStat> {
-		public CollectStatSerde() {
-			super(CollectStat.class);
+	static public final class MailBoxStatSerde extends WrapperSerde<MailBoxStat> {
+		public MailBoxStatSerde() {
+			super(MailBoxStat.class);
 		}
 	}
 

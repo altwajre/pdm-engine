@@ -10,4 +10,23 @@ public class TickerWindow {
 		this.ticker = ticker;
 		this.timestamp = timestamp;
 	}
+
+	public TickerWindow() {
+	}
+
+	public String getTicker() {
+		return ticker;
+	}
+
+	public void setTicker(String ticker) {
+		this.ticker = ticker;
+	}
+
+	public long getTimestamp() {
+		return timestamp;
+	}
+
+	public void setTimestamp(long timestamp) {
+		this.timestamp = timestamp;
+	}
 }

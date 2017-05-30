@@ -1,27 +1,24 @@
 package cn.betasoft.pdm.engine.monitor.listener;
 
-import static java.time.temporal.ChronoUnit.MINUTES;
+import cn.betasoft.pdm.engine.model.monitor.CollectStat;
+import cn.betasoft.pdm.engine.model.monitor.MailBoxStat;
+import cn.betasoft.pdm.engine.model.monitor.MonitorMessage;
+import cn.betasoft.pdm.engine.model.monitor.MonitorType;
+import cn.betasoft.pdm.engine.monitor.stream.TickerWindow;
+import cn.betasoft.pdm.engine.monitor.websocket.MonitorMsgSend;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.kafka.clients.consumer.*;
+import org.apache.kafka.common.TopicPartition;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.*;
 
-import cn.betasoft.pdm.engine.model.monitor.CollectStat;
-import cn.betasoft.pdm.engine.monitor.stream.CollectDataStream;
-import cn.betasoft.pdm.engine.monitor.stream.TickerWindow;
-import org.apache.kafka.clients.consumer.*;
-import org.apache.kafka.common.TopicPartition;
-import org.apache.kafka.common.serialization.StringDeserializer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static java.time.temporal.ChronoUnit.MINUTES;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import cn.betasoft.pdm.engine.model.monitor.MonitorMessage;
-import cn.betasoft.pdm.engine.model.monitor.MonitorType;
-import cn.betasoft.pdm.engine.monitor.websocket.MonitorMsgSend;
-
-public class CollectStatListener extends Thread {
+public class MailBoxStatListener extends Thread {
 
 	private Properties kafkaConsumerProperties;
 
@@ -31,15 +28,15 @@ public class CollectStatListener extends Thread {
 
 	private static final String GROUP = "monitor";
 
-	private static final String TOPIC = "collectStat";
+	private static final String TOPIC = "mailboxStat";
 
 	private static final int OFFSETMINUTE = 0;
 
 	private final static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-	private static final Logger logger = LoggerFactory.getLogger(CollectStatListener.class);
+	private static final Logger logger = LoggerFactory.getLogger(MailBoxStatListener.class);
 
-	public CollectStatListener(Properties kafkaConsumerProperties, MonitorMsgSend monitorMsgSend) {
+	public MailBoxStatListener(Properties kafkaConsumerProperties, MonitorMsgSend monitorMsgSend) {
 		this.kafkaConsumerProperties = kafkaConsumerProperties;
 		this.monitorMsgSend = monitorMsgSend;
 		createConsumer();
@@ -72,11 +69,11 @@ public class CollectStatListener extends Thread {
 					ObjectMapper objectMapper = new ObjectMapper();
 
 					TickerWindow tickerWindow = objectMapper.readValue(record.key(),TickerWindow.class);
-					CollectStat collectStat = objectMapper.readValue(record.value(),CollectStat.class);
-					collectStat.setSampleTime(new Date(tickerWindow.getTimestamp()));
-					String collectStatValue = objectMapper.writeValueAsString(collectStat);
+					MailBoxStat mailBoxStat = objectMapper.readValue(record.value(),MailBoxStat.class);
+					mailBoxStat.setSampleTime(new Date(tickerWindow.getTimestamp()));
+					String mailBoxStatValue = objectMapper.writeValueAsString(mailBoxStat);
 
-					MonitorMessage monitorMessage = new MonitorMessage(MonitorType.COLLECTSTAT, collectStatValue);
+					MonitorMessage monitorMessage = new MonitorMessage(MonitorType.MAILBOX, mailBoxStatValue);
 					String value = objectMapper.writeValueAsString(monitorMessage);
 					monitorMsgSend.sendMessage(value);
 					Thread.sleep(1000);

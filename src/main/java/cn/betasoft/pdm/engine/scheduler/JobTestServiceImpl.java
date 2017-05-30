@@ -42,7 +42,7 @@ public class JobTestServiceImpl implements JobTestService {
 		// 不能包括中文
 		String[] indicatorNames = { "PING", "CPU", "MEM", "DISK", "PORT" };
 
-		for (int i = 0; i < 1; i++) {
+		for (int i = 0; i < 100; i++) {
 			Device device = new Device();
 			device.setIp("138.174.65." + i);
 			device.setName("device-" + i);
@@ -115,8 +115,8 @@ public class JobTestServiceImpl implements JobTestService {
 						indicator.getSingleIndicatorTasks().add(task);
 						task.setIndicator(indicator);
 
-						System.out.println("task is: " + task.getKey() + ",indicator is:" + indicator.getName()
-								+ ",mo is:" + mo.getMoPath() + ",device is:" + device.getIp());
+//						System.out.println("task is: " + task.getKey() + ",indicator is:" + indicator.getName()
+//								+ ",mo is:" + mo.getMoPath() + ",device is:" + device.getIp());
 					}
 				}
 

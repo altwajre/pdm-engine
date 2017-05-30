@@ -45,10 +45,30 @@ export class SplineComponent implements OnInit, AfterViewInit, OnDestroy {
     @Input()
     set newData(newData: any) {
         if (newData && this._chart) {
-            for (let childIndex in newData) {
-                this._chart.series[+childIndex].addPoint(newData[childIndex], false, true);
+            let update = false;
+            let pointObjects: Highcharts.PointObject[] = this._chart.series[0].data;
+            for (let pointObject of pointObjects) {
+                if (pointObject.x === newData[0][0]) {
+                    update = true;
+                    break;
+                }
             }
-            this._chart.redraw();
+            if (update) {
+                for (let i = 0; i < this._chart.series.length; i++) {
+                    let pointObjects: Highcharts.PointObject[] = this._chart.series[i].data;
+                    for (let pointObject of pointObjects) {
+                        if (pointObject.x === newData[i][0]) {
+                            pointObject.update(newData[i]);
+                            break;
+                        }
+                    }
+                }
+            } else {
+                for (let childIndex in newData) {
+                    this._chart.series[+childIndex].addPoint(newData[childIndex], false, true);
+                }
+                this._chart.redraw();
+            }
         }
     }
 
@@ -86,10 +106,15 @@ export class SplineComponent implements OnInit, AfterViewInit, OnDestroy {
                 },
                 tooltip: {
                     formatter: function () {
-                        return '<b>' + this.series.name + '</b><br/>' +
-                            Highcharts.dateFormat('%H:%M:%S', this.x) + '<b>   ' +
-                            this.y + '</b>';
-                    }
+                        let s = '<b>' + Highcharts.dateFormat('%H:%M:%S', this.x) + '</b>';
+                        this.points.forEach(point => {
+                            s += '<br/>' + point.series.name + ': ' +
+                                point.y;
+                        });
+                        return s;
+                    },
+                    shared: true,
+                    crosshairs: true
                 },
                 legend: {
                     enabled: true
@@ -107,7 +132,7 @@ export class SplineComponent implements OnInit, AfterViewInit, OnDestroy {
                         },
                         marker: {
                             enabled: true
-                        }                        
+                        }
                     }
                 },
                 series: []

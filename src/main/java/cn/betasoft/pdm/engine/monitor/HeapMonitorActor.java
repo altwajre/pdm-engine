@@ -1,7 +1,6 @@
 package cn.betasoft.pdm.engine.monitor;
 
-import akka.actor.AbstractActor;
-import akka.actor.ActorSystem;
+import akka.actor.*;
 import cn.betasoft.pdm.engine.config.akka.ActorBean;
 import cn.betasoft.pdm.engine.model.monitor.HeapInfo;
 import cn.betasoft.pdm.engine.model.monitor.MonitorMessage;
@@ -48,6 +47,12 @@ public class HeapMonitorActor extends AbstractActor {
 
 			actorSystem.actorSelection("/user/monitorSupervisor/kafkaProduce")
 					.tell(new KafkaProduceActor.MonitorMessage("heap", "", value), this.getSelf());
+
+//			LocalActorRef ref = (LocalActorRef) this.getSelf();
+//			Cell cell = ref.underlying();
+//			ActorCell ac = (ActorCell) cell;
+//			int mailboxSize = ac.mailbox().numberOfMessages();
+//            System.out.println(mailboxSize);
 		}).matchAny(o -> logger.info("received unknown message")).build();
 	}
 }

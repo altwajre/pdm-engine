@@ -49,6 +49,14 @@ public class MonitorListenerStart {
 			consumers.add(dispatcherInfoListener);
 			executor.submit(dispatcherInfoListener);
 		}
+
+		Thread collectStatListener = new CollectStatListener(kafkaConsumerProperties, monitorMsgSend);
+		consumers.add(collectStatListener);
+		executor.submit(collectStatListener);
+
+		Thread mailboxStatListener = new MailBoxStatListener(kafkaConsumerProperties, monitorMsgSend);
+		consumers.add(mailboxStatListener);
+		executor.submit(mailboxStatListener);
 	}
 
 	@PreDestroy

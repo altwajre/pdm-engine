@@ -17,6 +17,8 @@ import { MonitorMessage } from '../model/MonitorMessage';
 import { MonitorType } from '../model/MonitorType';
 import { HeapInfo } from '../model/HeapInfo';
 import { DispatcherInfo } from '../model/DispatcherInfo';
+import { CollectStat } from '../model/CollectStat';
+import { MailBoxStat } from '../model/MailBoxStat';
 
 @Component({
   selector: 'app-list',
@@ -44,16 +46,26 @@ export class ListComponent implements OnInit, AfterViewInit, OnDestroy {
 
   dispatcherNames = ["akka.actor.default-dispatcher", "pdm-work-dispatcher",
     "pdm-future-dispatcher"];
-     
+
   // work dispatcher   
   workDispatcherInfos = [];
   newWorkDispatcherInfo = {};
-  workDispatcherSeriesNames = ['激活线程数','等候任务数'];
+  workDispatcherSeriesNames = ['激活线程数', '等候任务数'];
 
   // future dispatcher
   futureDispatcherInfos = [];
   newFutureDispatcherInfo = {};
-  futureDispatcherSeriesNames = ['激活线程数','等候任务数'];
+  futureDispatcherSeriesNames = ['激活线程数', '等候任务数'];
+
+  // collectStat
+  collectStatInfos = [];
+  newCollectStatInfo = {};
+  collectStatSeriesNames = ['完成数', '超时数', '平均时间'];
+
+  // mailboxStat
+  mailboxStatInfos = [];
+  newMailboxStatInfo = {};
+  mailboxStatSeriesNames = ['新消息', '离开消息', '等候时间'];
 
 
   /** Constructor */
@@ -71,7 +83,7 @@ export class ListComponent implements OnInit, AfterViewInit, OnDestroy {
     // for use with template ( | async )
     this.subscribe();
 
-    this._monitorService.findHeapInfo(3).subscribe(
+    this._monitorService.findHeapInfo(2).subscribe(
       infos => {
         this.heapInfos = [];
         if (infos && infos.length > 0) {
@@ -85,9 +97,9 @@ export class ListComponent implements OnInit, AfterViewInit, OnDestroy {
       },
       error => this.errorMessage = <any>error);
 
-      this._monitorService.findDispatcherInfo(this.dispatcherNames[1],3).subscribe(
+    this._monitorService.findDispatcherInfo(this.dispatcherNames[1], 2).subscribe(
       infos => {
-        this.workDispatcherInfos = [];        
+        this.workDispatcherInfos = [];
         if (infos && infos.length > 0) {
           for (var info of infos) {
             this.workDispatcherInfos.push({
@@ -99,7 +111,7 @@ export class ListComponent implements OnInit, AfterViewInit, OnDestroy {
       },
       error => this.errorMessage = <any>error);
 
-      this._monitorService.findDispatcherInfo(this.dispatcherNames[2],3).subscribe(
+    this._monitorService.findDispatcherInfo(this.dispatcherNames[2], 2).subscribe(
       infos => {
         this.futureDispatcherInfos = [];
         if (infos && infos.length > 0) {
@@ -107,6 +119,36 @@ export class ListComponent implements OnInit, AfterViewInit, OnDestroy {
             this.futureDispatcherInfos.push({
               0: [info.sampleTime, info.activeThreadCount],
               1: [info.sampleTime, info.queuedSubmissionCount]
+            });
+          }
+        }
+      },
+      error => this.errorMessage = <any>error);
+
+    this._monitorService.findCollectStat(2).subscribe(
+      infos => {
+        this.collectStatInfos = [];
+        if (infos && infos.length > 0) {
+          for (var info of infos) {
+            this.collectStatInfos.push({
+              0: [info.sampleTime, info.totalNumber],
+              1: [info.sampleTime, info.timeoutNumber],
+              2: [info.sampleTime, info.avgTime]
+            });
+          }
+        }
+      },
+      error => this.errorMessage = <any>error);
+
+    this._monitorService.findMailboxStat(2).subscribe(
+      infos => {
+        this.mailboxStatInfos = [];
+        if (infos && infos.length > 0) {
+          for (var info of infos) {
+            this.mailboxStatInfos.push({
+              0: [info.sampleTime, info.entryNumber],
+              1: [info.sampleTime, info.exitNumber],
+              2: [info.sampleTime, info.avgTime]
             });
           }
         }
@@ -149,24 +191,38 @@ export class ListComponent implements OnInit, AfterViewInit, OnDestroy {
 
   public on_next = (message: Message) => {
     let monitorMessage = JSON.parse(message.body) as MonitorMessage;
-    console.log(monitorMessage);
+    //console.log(monitorMessage);
     if (monitorMessage.type == MonitorType.HEAP) {
       let heapInfo = JSON.parse(monitorMessage.message) as HeapInfo;
       this.newHeapInfo = {
         0: [heapInfo.sampleTime, heapInfo.heapUsed],
         1: [heapInfo.sampleTime, heapInfo.heapCommitted]
       }
-    }else if (monitorMessage.type == MonitorType.WORKDISPATCHER) {
+    } else if (monitorMessage.type == MonitorType.WORKDISPATCHER) {
       let dispatcherInfo = JSON.parse(monitorMessage.message) as DispatcherInfo;
       this.newWorkDispatcherInfo = {
         0: [dispatcherInfo.sampleTime, dispatcherInfo.activeThreadCount],
         1: [dispatcherInfo.sampleTime, dispatcherInfo.queuedSubmissionCount]
       }
-    }else if (monitorMessage.type == MonitorType.FUTUREDISPATCHER) {
+    } else if (monitorMessage.type == MonitorType.FUTUREDISPATCHER) {
       let dispatcherInfo = JSON.parse(monitorMessage.message) as DispatcherInfo;
       this.newFutureDispatcherInfo = {
         0: [dispatcherInfo.sampleTime, dispatcherInfo.activeThreadCount],
         1: [dispatcherInfo.sampleTime, dispatcherInfo.queuedSubmissionCount]
+      }
+    } else if (monitorMessage.type == MonitorType.COLLECTSTAT) {
+      let collectStat = JSON.parse(monitorMessage.message) as CollectStat;
+      this.newCollectStatInfo = {
+        0: [collectStat.sampleTime, collectStat.totalNumber],
+        1: [collectStat.sampleTime, collectStat.timeoutNumber],
+        2: [collectStat.sampleTime, collectStat.avgTime]
+      }
+    } else if (monitorMessage.type == MonitorType.MAILBOX) {
+      let mailboxStat = JSON.parse(monitorMessage.message) as MailBoxStat;
+      this.newMailboxStatInfo = {
+        0: [mailboxStat.sampleTime, mailboxStat.entryNumber],
+        1: [mailboxStat.sampleTime, mailboxStat.exitNumber],
+        2: [mailboxStat.sampleTime, mailboxStat.avgTime]
       }
     }
 

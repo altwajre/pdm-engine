@@ -60,7 +60,7 @@ public class SingleIndicatorTaskActor extends AbstractActor {
 
 	@Override
 	public void preStart() {
-		logger.info("preStart,indicator is: {}, task is: {}", task.getIndicator().getName(), task.toString());
+		//logger.info("preStart,indicator is: {}, task is: {}", task.getIndicator().getName(), task.toString());
 		init();
 	}
 
@@ -77,7 +77,7 @@ public class SingleIndicatorTaskActor extends AbstractActor {
 	}
 
 	@Override public void postStop() throws Exception {
-		logger.info("postStop,task is:" + task.toString());
+		//logger.info("postStop,task is:" + task.toString());
 		super.postStop();
 	}
 

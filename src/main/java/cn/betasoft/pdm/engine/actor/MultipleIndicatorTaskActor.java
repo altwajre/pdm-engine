@@ -32,7 +32,7 @@ public class MultipleIndicatorTaskActor extends AbstractActor {
 
 	@Override
 	public void preStart() {
-		logger.info("preStart,multiIndicatorTask is:" + multiIndicatorTask.getName());
+		//logger.info("preStart,multiIndicatorTask is:" + multiIndicatorTask.getName());
 		multiIndicatorTask.getIndicators().forEach(indicator -> {
 			StringBuilder sb = new StringBuilder();
 			sb.append(indicator.getMo().getDevice().getIp()).append("-");

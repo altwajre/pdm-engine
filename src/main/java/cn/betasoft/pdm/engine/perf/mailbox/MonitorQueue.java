@@ -60,6 +60,9 @@ public class MonitorQueue implements MessageQueue, UnboundedMessageQueueSemantic
 		MonitorEnvelope env = new MonitorEnvelope(queue.size() + 1, receiver.toString(), System.currentTimeMillis(),
 				handle);
 		queue.add(env);
+		MailboxStatistics stat = new MailboxStatistics(env.getQueueSize(), env.getReceiver(),
+				handle.sender().toString(), System.currentTimeMillis(),null);
+		this.system.eventStream().publish(stat);
 	}
 
 	@Override

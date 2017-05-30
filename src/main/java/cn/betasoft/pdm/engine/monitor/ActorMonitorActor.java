@@ -26,7 +26,7 @@ public class ActorMonitorActor extends AbstractActor {
 	@Override
 	public Receive createReceive() {
 		return receiveBuilder().match(ActorStatistics.class, statistics -> {
-			if (statistics.getReceiver().contains("/httpGetData") || statistics.getSender().contains("/httpGetData")) {
+			if (statistics.getReceiver().contains("/httpGetData")) {
 				// 数据采集actor
 				ObjectMapper objectMapper = new ObjectMapper();
 				String value = objectMapper.writeValueAsString(statistics);

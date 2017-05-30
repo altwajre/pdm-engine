@@ -4,10 +4,11 @@ import {
 } from '@angular/core';
 
 import { SplineComponent } from './splineChart/spline.component';
+import { BarchartComponent } from './barchart/barchart.component';
 
 @NgModule({
-    declarations: [ SplineComponent ],
-    exports: [ SplineComponent ]
+    declarations: [ SplineComponent,BarchartComponent ],
+    exports: [ SplineComponent,BarchartComponent ]
 })
 export class ComponentModule {
 

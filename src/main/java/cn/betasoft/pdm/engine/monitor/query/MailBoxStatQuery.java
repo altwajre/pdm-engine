@@ -1,19 +1,17 @@
 package cn.betasoft.pdm.engine.monitor.query;
 
-import java.util.*;
-
 import cn.betasoft.pdm.engine.model.monitor.CollectStat;
+import cn.betasoft.pdm.engine.model.monitor.MailBoxStat;
 import cn.betasoft.pdm.engine.monitor.stream.TickerWindow;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.*;
 
-import cn.betasoft.pdm.engine.model.monitor.HeapInfo;
-
-public class CollectStatQuery {
+public class MailBoxStatQuery {
 
 	private String groupId;
 
@@ -25,9 +23,9 @@ public class CollectStatQuery {
 
 	private KafkaConsumer<String, String> consumer;
 
-	private static final Logger logger = LoggerFactory.getLogger(CollectStatQuery.class);
+	private static final Logger logger = LoggerFactory.getLogger(MailBoxStatQuery.class);
 
-	public CollectStatQuery(String groupId, String topic, Long offsetTime, Properties kafkaConsumerProperties) {
+	public MailBoxStatQuery(String groupId, String topic, Long offsetTime, Properties kafkaConsumerProperties) {
 		this.groupId = groupId;
 		this.topic = topic;
 		this.offsetTime = offsetTime;
@@ -36,8 +34,8 @@ public class CollectStatQuery {
 		this.createConsumer();
 	}
 
-	public List<CollectStat> query() {
-		Set<CollectStat> collectStats = new HashSet<>();
+	public List<MailBoxStat> query() {
+		Set<MailBoxStat> collectStats = new HashSet<>();
 
 		try {
 			ConsumerRecords<String, String> records = consumer.poll(500);
@@ -56,9 +54,9 @@ public class CollectStatQuery {
 				ObjectMapper objectMapper = new ObjectMapper();
 
 				TickerWindow tickerWindow = objectMapper.readValue(record.key(),TickerWindow.class);
-				CollectStat collectStat = objectMapper.readValue(record.value(),CollectStat.class);
-				collectStat.setSampleTime(new Date(tickerWindow.getTimestamp()));
-				collectStats.add(collectStat);
+				MailBoxStat mailBoxStat = objectMapper.readValue(record.value(),MailBoxStat.class);
+				mailBoxStat.setSampleTime(new Date(tickerWindow.getTimestamp()));
+				collectStats.add(mailBoxStat);
 			}
 		} catch (Exception ex) {
 			logger.info("query collect data error", ex);

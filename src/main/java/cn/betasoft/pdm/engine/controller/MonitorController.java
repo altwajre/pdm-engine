@@ -3,6 +3,7 @@ package cn.betasoft.pdm.engine.controller;
 import cn.betasoft.pdm.engine.model.monitor.CollectStat;
 import cn.betasoft.pdm.engine.model.monitor.DispatcherInfo;
 import cn.betasoft.pdm.engine.model.monitor.HeapInfo;
+import cn.betasoft.pdm.engine.model.monitor.MailBoxStat;
 import cn.betasoft.pdm.engine.monitor.HeapMonitorActor;
 import cn.betasoft.pdm.engine.monitor.service.MonitorQueryService;
 import org.slf4j.Logger;
@@ -47,5 +48,11 @@ public class MonitorController {
 	@ResponseStatus(value = HttpStatus.OK)
 	public @ResponseBody List<CollectStat> queryCollectStat(@PathVariable int offsetMinute) {
 		return monitorQueryService.queryCollectStat(offsetMinute);
+	}
+
+	@RequestMapping(value = "/mailboxStat/query/{offsetMinute}", method = RequestMethod.GET)
+	@ResponseStatus(value = HttpStatus.OK)
+	public @ResponseBody List<MailBoxStat> queryMailBoxStat(@PathVariable int offsetMinute) {
+		return monitorQueryService.queryMailBoxStat(offsetMinute);
 	}
 }

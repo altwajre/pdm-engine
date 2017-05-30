@@ -1,6 +1,8 @@
 package cn.betasoft.pdm.engine.perf.actor;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 public class ActorStatistics {
 
@@ -35,20 +37,40 @@ public class ActorStatistics {
 		return receiver;
 	}
 
+	public void setReceiver(String receiver) {
+		this.receiver = receiver;
+	}
+
 	public String getSender() {
 		return sender;
+	}
+
+	public void setSender(String sender) {
+		this.sender = sender;
 	}
 
 	public String getMethodName() {
 		return methodName;
 	}
 
+	public void setMethodName(String methodName) {
+		this.methodName = methodName;
+	}
+
 	public long getEntryTime() {
 		return entryTime;
 	}
 
+	public void setEntryTime(long entryTime) {
+		this.entryTime = entryTime;
+	}
+
 	public long getTotalTimeMillis() {
 		return totalTimeMillis;
+	}
+
+	public void setTotalTimeMillis(long totalTimeMillis) {
+		this.totalTimeMillis = totalTimeMillis;
 	}
 
 	public ActorStatisticsType getType() {

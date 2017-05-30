@@ -122,7 +122,7 @@ public class CollectDataActor extends AbstractActor {
 			pdmEventBusImpl.publish(new PdmMsgEnvelope(sb.toString(), result));
 		}).match(Status.Failure.class, f -> {
 			DataCollectTimeOut exception = (DataCollectTimeOut) f.cause();
-			ActorStatistics stat = new ActorStatistics(this.getSelf().toString(), this.getSender().toString(),
+			ActorStatistics stat = new ActorStatistics("/httpGetData", this.getSelf().toString(),
 					"", new Date().getTime(), 2000l, ActorStatisticsType.TIMEOUT);
 			this.actorSystem.eventStream().publish(stat);
 			logger.debug("timeout........" + exception.getMessage());

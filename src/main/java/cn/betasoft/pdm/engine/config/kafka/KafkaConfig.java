@@ -46,13 +46,4 @@ public class KafkaConfig {
 		return kafkaProps;
 	}
 
-	@Bean(name = "kafkaStreamProperties")
-	public Properties kafkaStreamProperties() {
-		Properties kafkaProps = new Properties();
-		kafkaProps.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG,
-				String.join(",", kafkaProperties.getBootstrap().getServers()));
-		kafkaProps.put(StreamsConfig.KEY_SERDE_CLASS_CONFIG,  Serdes.String().getClass().getName());
-		kafkaProps.put(StreamsConfig.VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
-		return kafkaProps;
-	}
 }
