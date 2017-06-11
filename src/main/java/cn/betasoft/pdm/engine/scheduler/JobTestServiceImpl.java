@@ -131,6 +131,7 @@ public class JobTestServiceImpl implements JobTestService {
 		MultiIndicatorTask multiTask01 = new MultiIndicatorTask();
 		multiTask01.setName(UUID.randomUUID().toString());
 		multiTask01.setDevice(firstDevice);
+		multiTask01.setType(TaskType.ALARM);
 		firstDevice.getMos().forEach(mo -> {
 			mo.getIndicators().forEach(indicator -> {
 				if (indicator.getName().equals("CPU") || indicator.getName().equals("MEM")) {

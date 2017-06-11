@@ -15,6 +15,8 @@ public class MultiIndicatorTask {
 	//最高级别任务，数据的采集使用独立线程池处理
 	private Boolean topLevel;
 
+	private TaskType type;
+
 	private List<Indicator> indicators = new ArrayList<>();
 
 	public MultiIndicatorTask(){
@@ -35,6 +37,14 @@ public class MultiIndicatorTask {
 
 	public void setDevice(Device device) {
 		this.device = device;
+	}
+
+	public TaskType getType() {
+		return type;
+	}
+
+	public void setType(TaskType type) {
+		this.type = type;
 	}
 
 	public Boolean getTopLevel() {

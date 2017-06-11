@@ -8,6 +8,7 @@ import cn.betasoft.pdm.engine.config.akka.ActorBean;
 import cn.betasoft.pdm.engine.config.akka.SpringProps;
 import cn.betasoft.pdm.engine.model.Indicator;
 import cn.betasoft.pdm.engine.model.ManagedObject;
+import cn.betasoft.pdm.engine.stats.EngineStatusActor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,6 +49,17 @@ public class MoActor extends AbstractActor {
 
 	public MoActor(ManagedObject mo) {
 		this.mo = mo;
+	}
+
+	@Override
+	public void preStart() {
+		actorSystem.actorSelection("/user/supervisor/status").tell(new EngineStatusActor.MoAdd(), this.getSelf());
+	}
+
+	@Override
+	public void postStop() throws Exception {
+		super.postStop();
+		actorSystem.actorSelection("/user/supervisor/status").tell(new EngineStatusActor.MoMinus(), this.getSelf());
 	}
 
 	@Override

@@ -1,13 +1,17 @@
 package cn.betasoft.pdm.engine.actor;
 
 import akka.actor.AbstractActor;
+import akka.actor.ActorSystem;
 import cn.betasoft.pdm.engine.config.akka.ActorBean;
 import cn.betasoft.pdm.engine.model.SingleIndicatorTask;
 import cn.betasoft.pdm.engine.config.aspectj.LogExecutionTime;
+import cn.betasoft.pdm.engine.model.TaskType;
+import cn.betasoft.pdm.engine.stats.EngineStatusActor;
 import com.google.common.collect.EvictingQueue;
 import org.quartz.CronExpression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -50,6 +54,9 @@ public class SingleIndicatorTaskActor extends AbstractActor {
 	// 例如需要通过3个采集数据判断状态，队列长度为3
 	private EvictingQueue<Result> resultQueue;
 
+	@Autowired
+	private ActorSystem actorSystem;
+
 	private final static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
 	private static final Logger logger = LoggerFactory.getLogger(SingleIndicatorTaskActor.class);
@@ -62,6 +69,11 @@ public class SingleIndicatorTaskActor extends AbstractActor {
 	public void preStart() {
 		//logger.info("preStart,indicator is: {}, task is: {}", task.getIndicator().getName(), task.toString());
 		init();
+		if(task.getType() == TaskType.ALARM){
+			actorSystem.actorSelection("/user/supervisor/status").tell(new EngineStatusActor.AlarmTaskAdd(), this.getSelf());
+		}else {
+			actorSystem.actorSelection("/user/supervisor/status").tell(new EngineStatusActor.RuleTaskAdd(), this.getSelf());
+		}
 	}
 
 	@Override
@@ -79,6 +91,11 @@ public class SingleIndicatorTaskActor extends AbstractActor {
 	@Override public void postStop() throws Exception {
 		//logger.info("postStop,task is:" + task.toString());
 		super.postStop();
+		if(task.getType() == TaskType.ALARM){
+			actorSystem.actorSelection("/user/supervisor/status").tell(new EngineStatusActor.AlarmTaskMinus(), this.getSelf());
+		}else {
+			actorSystem.actorSelection("/user/supervisor/status").tell(new EngineStatusActor.RuleTaskMinus(), this.getSelf());
+		}
 	}
 
 	private void init() {

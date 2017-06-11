@@ -11,6 +11,7 @@ import cn.betasoft.pdm.engine.config.akka.AkkaProperties;
 import cn.betasoft.pdm.engine.config.akka.SpringProps;
 import cn.betasoft.pdm.engine.model.Indicator;
 import cn.betasoft.pdm.engine.model.SingleIndicatorTask;
+import cn.betasoft.pdm.engine.stats.EngineStatusActor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,6 +63,17 @@ public class IndicatorActor extends AbstractActor {
 
 	public IndicatorActor(Indicator indicator) {
 		this.indicator = indicator;
+	}
+
+	@Override
+	public void preStart() {
+		actorSystem.actorSelection("/user/supervisor/status").tell(new EngineStatusActor.IndicatorAdd(), this.getSelf());
+	}
+
+	@Override
+	public void postStop() throws Exception {
+		super.postStop();
+		actorSystem.actorSelection("/user/supervisor/status").tell(new EngineStatusActor.IndicatorMinus(), this.getSelf());
 	}
 
 	private static SupervisorStrategy strategy = new OneForOneStrategy(10, Duration.create("1 minute"),

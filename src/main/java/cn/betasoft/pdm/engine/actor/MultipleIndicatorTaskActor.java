@@ -1,12 +1,15 @@
 package cn.betasoft.pdm.engine.actor;
 
 import akka.actor.AbstractActor;
+import akka.actor.ActorSystem;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import cn.betasoft.pdm.engine.config.akka.ActorBean;
 import cn.betasoft.pdm.engine.event.PdmEventBusImpl;
 import cn.betasoft.pdm.engine.event.PdmMsgEnvelope;
 import cn.betasoft.pdm.engine.model.MultiIndicatorTask;
+import cn.betasoft.pdm.engine.model.TaskType;
+import cn.betasoft.pdm.engine.stats.EngineStatusActor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +29,9 @@ public class MultipleIndicatorTaskActor extends AbstractActor {
 	@Autowired
 	private PdmEventBusImpl pdmEventBusImpl;
 
+	@Autowired
+	private ActorSystem actorSystem;
+
 	public MultipleIndicatorTaskActor(MultiIndicatorTask multiIndicatorTask) {
 		this.multiIndicatorTask = multiIndicatorTask;
 	}
@@ -40,6 +46,12 @@ public class MultipleIndicatorTaskActor extends AbstractActor {
 			sb.append(indicator.getName());
 			pdmEventBusImpl.subscribe(this.getSelf(), sb.toString());
 		});
+
+		if(multiIndicatorTask.getType() == TaskType.ALARM){
+			actorSystem.actorSelection("/user/supervisor/status").tell(new EngineStatusActor.AlarmTaskAdd(), this.getSelf());
+		}else {
+			actorSystem.actorSelection("/user/supervisor/status").tell(new EngineStatusActor.RuleTaskAdd(), this.getSelf());
+		}
 	}
 
 	@Override
@@ -52,6 +64,16 @@ public class MultipleIndicatorTaskActor extends AbstractActor {
 		logger.info("preRestart,multiIndicatorTask is:" + multiIndicatorTask.getName());
 		// Keep the call to postStop(), but no stopping of children
 		postStop();
+	}
+
+	@Override
+	public void postStop() throws Exception {
+		super.postStop();
+		if(multiIndicatorTask.getType() == TaskType.ALARM){
+			actorSystem.actorSelection("/user/supervisor/status").tell(new EngineStatusActor.AlarmTaskMinus(), this.getSelf());
+		}else {
+			actorSystem.actorSelection("/user/supervisor/status").tell(new EngineStatusActor.RuleTaskMinus(), this.getSelf());
+		}
 	}
 
 	@Override
