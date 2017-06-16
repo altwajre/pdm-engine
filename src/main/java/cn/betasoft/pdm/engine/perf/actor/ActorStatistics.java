@@ -22,7 +22,7 @@ public class ActorStatistics {
 	public ActorStatistics(){
 
 	}
-	
+
 	public ActorStatistics(String receiver, String sender, String methodName, long entryTime, long totalTimeMillis,
 			ActorStatisticsType type) {
 		this.receiver = receiver;

@@ -62,7 +62,7 @@ public class HttpGetDataActor extends AbstractActor {
 	@Override
 	public Receive createReceive() {
 		return receiveBuilder().match(HttpGetData.class, httpGetData -> {
-			Future<SingleIndicatorTaskActor.Result> delayed = Patterns.after(Duration.create(1, "seconds"),
+			Future<SingleIndicatorTaskActor.Result> delayed = Patterns.after(Duration.create(10, "seconds"),
 					actorSystem.scheduler(), ec, failExcute(httpGetData));
 			Future<SingleIndicatorTaskActor.Result> getDataFuture = getDataByHttp(httpGetData);
 			Future<SingleIndicatorTaskActor.Result> result = Futures
@@ -76,7 +76,7 @@ public class HttpGetDataActor extends AbstractActor {
 		logger.debug("command is {},task time is {} ,http collect start...", httpGetData.getCommand(),
 				sdf.format(httpGetData.scheduledFireTime));
 		Random random = new Random();
-		int sleepTime = 100 + random.nextInt(910);
+		int sleepTime = 100 + random.nextInt(2000);
 		try {
 			Thread.sleep(sleepTime);
 		} catch (Exception ex) {

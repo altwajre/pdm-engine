@@ -1,7 +1,7 @@
 package cn.betasoft.pdm.engine.stats;
 
 
-public enum EngineStatus {
+public enum PdmEngineStatus {
 
     INSTANCE;
 

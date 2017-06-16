@@ -1,7 +1,6 @@
 package cn.betasoft.pdm.engine.monitor.listener;
 
 import cn.betasoft.pdm.engine.model.monitor.CollectStat;
-import cn.betasoft.pdm.engine.model.monitor.MailBoxStat;
 import cn.betasoft.pdm.engine.model.monitor.MonitorMessage;
 import cn.betasoft.pdm.engine.model.monitor.MonitorType;
 import cn.betasoft.pdm.engine.monitor.stream.TickerWindow;
@@ -18,7 +17,7 @@ import java.util.*;
 
 import static java.time.temporal.ChronoUnit.MINUTES;
 
-public class MailBoxStatListener extends Thread {
+public class IndicatorHandleStatListener extends Thread {
 
 	private Properties kafkaConsumerProperties;
 
@@ -28,15 +27,15 @@ public class MailBoxStatListener extends Thread {
 
 	private static final String GROUP = "monitor";
 
-	private static final String TOPIC = "mailboxStat";
+	private static final String TOPIC = "indicatorHandleStat";
 
 	private static final int OFFSETMINUTE = 0;
 
 	private final static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-	private static final Logger logger = LoggerFactory.getLogger(MailBoxStatListener.class);
+	private static final Logger logger = LoggerFactory.getLogger(IndicatorHandleStatListener.class);
 
-	public MailBoxStatListener(Properties kafkaConsumerProperties, MonitorMsgSend monitorMsgSend) {
+	public IndicatorHandleStatListener(Properties kafkaConsumerProperties, MonitorMsgSend monitorMsgSend) {
 		this.kafkaConsumerProperties = kafkaConsumerProperties;
 		this.monitorMsgSend = monitorMsgSend;
 		createConsumer();
@@ -69,15 +68,15 @@ public class MailBoxStatListener extends Thread {
 					ObjectMapper objectMapper = new ObjectMapper();
 
 					TickerWindow tickerWindow = objectMapper.readValue(record.key(),TickerWindow.class);
-					MailBoxStat mailBoxStat = objectMapper.readValue(record.value(),MailBoxStat.class);
-					mailBoxStat.setSampleTime(new Date(tickerWindow.getTimestamp()));
-					String mailBoxStatValue = objectMapper.writeValueAsString(mailBoxStat);
+					CollectStat collectStat = objectMapper.readValue(record.value(),CollectStat.class);
+					collectStat.setSampleTime(new Date(tickerWindow.getTimestamp()));
+					String collectStatValue = objectMapper.writeValueAsString(collectStat);
 
-					MonitorMessage monitorMessage = new MonitorMessage(MonitorType.MAILBOX, mailBoxStatValue);
+					MonitorMessage monitorMessage = new MonitorMessage(MonitorType.INDICATORHANDLESTAT, collectStatValue);
 					String value = objectMapper.writeValueAsString(monitorMessage);
 					monitorMsgSend.sendMessage(value);
 					Thread.sleep(1000);
-					logger.debug("offset = {}, time ={},key = {}, value = {}" ,record.offset(),sdf.format(tickerWindow.getTimestamp()), record.key(), record.value());
+					//logger.info("offset = {}, time ={},key = {}, value = {}" ,record.offset(),sdf.format(tickerWindow.getTimestamp()), record.key(), record.value());
 				} catch (Exception ex) {
 					logger.info("parse heap info error", ex);
 				}

@@ -33,6 +33,13 @@ public class ActorMonitorActor extends AbstractActor {
 
 				actorSystem.actorSelection("/user/monitorSupervisor/kafkaProduce")
 						.tell(new KafkaProduceActor.MonitorMessage("collectData", "", value), this.getSelf());
+			}else if (statistics.getReceiver().contains("/st-")) {
+				// 数据采集actor
+				ObjectMapper objectMapper = new ObjectMapper();
+				String value = objectMapper.writeValueAsString(statistics);
+
+				actorSystem.actorSelection("/user/monitorSupervisor/kafkaProduce")
+						.tell(new KafkaProduceActor.MonitorMessage("indicatorHandleData", "", value), this.getSelf());
 			}
 			logger.debug(
 					"************************ actor statistics, actor is : {}, method is {}, entry time is {}, run time is: {}",

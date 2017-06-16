@@ -3,14 +3,8 @@
     <spline-chart [title]="'堆内存监测'" [seriesNames]="heapSeriesNames" [ytitle]="'指标M'" [initPoints]="heapInfos" [newData]="newHeapInfo"></spline-chart>
   </div>
   <div class="col">
-     <spline-chart [title]="'采集工作监测'" [seriesNames]="collectStatSeriesNames" [ytitle]="'数量'" [initPoints]="collectStatInfos" [newData]="newCollectStatInfo"></spline-chart>
-  </div>
-</div>
-<div class="row">
-  <div class="col">
-    <spline-chart [title]="'mailbox监测'" [seriesNames]="mailboxStatSeriesNames" [ytitle]="'数量'" [initPoints]="mailboxStatInfos"
-      [newData]="newMailboxStatInfo"></spline-chart>
-  </div>
+   <spline-chart [title]="'指标处理监测'" [seriesNames]="indicatorHandleStatSeriesNames" [ytitle]="'数量'" [initPoints]="indicatorHandleStatInfos" [newData]="newIndicatorHandleStatInfo"></spline-chart>
+ </div>
 </div>
 <div class="row">
   <div class="col">
@@ -18,7 +12,16 @@
       [newData]="newWorkDispatcherInfo"></spline-chart>
   </div>
   <div class="col">
+    <spline-chart [title]="'mailbox监测'" [seriesNames]="mailboxStatSeriesNames" [ytitle]="'数量'" [initPoints]="mailboxStatInfos"
+      [newData]="newMailboxStatInfo"></spline-chart>
+  </div>
+</div>
+<div class="row">  
+  <div class="col">
     <spline-chart [title]="'FUTURE线程监测'" [seriesNames]="futureDispatcherSeriesNames" [ytitle]="'数量'" [initPoints]="futureDispatcherInfos"
       [newData]="newFutureDispatcherInfo"></spline-chart>
+  </div>
+   <div class="col">
+     <spline-chart [title]="'采集工作监测'" [seriesNames]="collectStatSeriesNames" [ytitle]="'数量'" [initPoints]="collectStatInfos" [newData]="newCollectStatInfo"></spline-chart>
   </div>
 </div>

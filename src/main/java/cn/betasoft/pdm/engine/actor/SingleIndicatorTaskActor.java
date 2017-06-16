@@ -6,7 +6,8 @@ import cn.betasoft.pdm.engine.config.akka.ActorBean;
 import cn.betasoft.pdm.engine.model.SingleIndicatorTask;
 import cn.betasoft.pdm.engine.config.aspectj.LogExecutionTime;
 import cn.betasoft.pdm.engine.model.TaskType;
-import cn.betasoft.pdm.engine.stats.EngineStatusActor;
+import cn.betasoft.pdm.engine.stats.PdmEngineStatusActor;
+
 import com.google.common.collect.EvictingQueue;
 import org.quartz.CronExpression;
 import org.slf4j.Logger;
@@ -16,6 +17,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+
+import com.codahale.metrics.Timer;
+import com.codahale.metrics.MetricRegistry;
 
 /**
  * 告警或智维工作类 它们与数据采集Actor属于兄弟关系
@@ -57,6 +61,11 @@ public class SingleIndicatorTaskActor extends AbstractActor {
 	@Autowired
 	private ActorSystem actorSystem;
 
+	@Autowired
+	private MetricRegistry metricRegistry;
+
+	private Timer responses;
+
 	private final static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
 	private static final Logger logger = LoggerFactory.getLogger(SingleIndicatorTaskActor.class);
@@ -70,9 +79,9 @@ public class SingleIndicatorTaskActor extends AbstractActor {
 		//logger.info("preStart,indicator is: {}, task is: {}", task.getIndicator().getName(), task.toString());
 		init();
 		if(task.getType() == TaskType.ALARM){
-			actorSystem.actorSelection("/user/supervisor/status").tell(new EngineStatusActor.AlarmTaskAdd(), this.getSelf());
+			actorSystem.actorSelection("/user/supervisor/status").tell(new PdmEngineStatusActor.AlarmTaskAdd(), this.getSelf());
 		}else {
-			actorSystem.actorSelection("/user/supervisor/status").tell(new EngineStatusActor.RuleTaskAdd(), this.getSelf());
+			actorSystem.actorSelection("/user/supervisor/status").tell(new PdmEngineStatusActor.RuleTaskAdd(), this.getSelf());
 		}
 	}
 
@@ -92,14 +101,16 @@ public class SingleIndicatorTaskActor extends AbstractActor {
 		//logger.info("postStop,task is:" + task.toString());
 		super.postStop();
 		if(task.getType() == TaskType.ALARM){
-			actorSystem.actorSelection("/user/supervisor/status").tell(new EngineStatusActor.AlarmTaskMinus(), this.getSelf());
+			actorSystem.actorSelection("/user/supervisor/status").tell(new PdmEngineStatusActor.AlarmTaskMinus(), this.getSelf());
 		}else {
-			actorSystem.actorSelection("/user/supervisor/status").tell(new EngineStatusActor.RuleTaskMinus(), this.getSelf());
+			actorSystem.actorSelection("/user/supervisor/status").tell(new PdmEngineStatusActor.RuleTaskMinus(), this.getSelf());
 		}
 	}
 
 	private void init() {
 		try {
+			responses = metricRegistry.timer(MetricRegistry.name(SingleIndicatorTaskActor.class,"get-latency"));
+
 			fireCronExpression = new CronExpression(task.getCronExpression());
 			for (String holiday : task.getHolidayCronExrpessions()) {
 
@@ -123,6 +134,7 @@ public class SingleIndicatorTaskActor extends AbstractActor {
 
 	@LogExecutionTime
 	private void resultHandler(Result result) {
+		final Timer.Context context = responses.time();
 		Date schedulerFireTime = result.getScheduledFireTime();
 		if (fireCronExpression.isSatisfiedBy(schedulerFireTime)) {
 			boolean isHoliday = inHoliday(schedulerFireTime);
@@ -140,7 +152,7 @@ public class SingleIndicatorTaskActor extends AbstractActor {
 
 				if (resultQueue.size() == task.getIndicatorNum()) {
 					Random random = new Random();
-					int sleepTime = 100 + random.nextInt(1000);
+					int sleepTime = 10 + random.nextInt(90);
 					try {
 						Thread.sleep(sleepTime);
 					} catch (Exception ex) {
@@ -151,6 +163,7 @@ public class SingleIndicatorTaskActor extends AbstractActor {
 				}
 			}
 		}
+		context.stop();
 		//throw new IllegalArgumentException("1111111");
 	}
 

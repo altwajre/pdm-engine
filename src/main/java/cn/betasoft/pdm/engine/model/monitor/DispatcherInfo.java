@@ -1,5 +1,7 @@
 package cn.betasoft.pdm.engine.model.monitor;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import java.io.Serializable;
 import java.util.Date;
 
@@ -9,6 +11,9 @@ import java.util.Date;
 public class DispatcherInfo  implements Serializable {
 
 	private Date sampleTime;
+
+	@JsonFormat(shape = JsonFormat.Shape.NUMBER_INT)
+	private DispatcherType type;
 
 	//池的并行的级别
 	private long parallelism;
@@ -28,6 +33,12 @@ public class DispatcherInfo  implements Serializable {
 	//已经提交给线程池但还没有开始执行的任务数
 	private long queuedSubmissionCount;
 
+	//核心线程数
+	private long corePoolSize;
+
+	//最大线程池大小
+	private long maximumPoolSize;
+
 	public DispatcherInfo() {
 	}
 
@@ -37,6 +48,14 @@ public class DispatcherInfo  implements Serializable {
 
 	public void setSampleTime(Date sampleTime) {
 		this.sampleTime = sampleTime;
+	}
+
+	public DispatcherType getType() {
+		return type;
+	}
+
+	public void setType(DispatcherType type) {
+		this.type = type;
 	}
 
 	public long getParallelism() {
@@ -85,5 +104,21 @@ public class DispatcherInfo  implements Serializable {
 
 	public void setQueuedSubmissionCount(long queuedSubmissionCount) {
 		this.queuedSubmissionCount = queuedSubmissionCount;
+	}
+
+	public long getCorePoolSize() {
+		return corePoolSize;
+	}
+
+	public void setCorePoolSize(long corePoolSize) {
+		this.corePoolSize = corePoolSize;
+	}
+
+	public long getMaximumPoolSize() {
+		return maximumPoolSize;
+	}
+
+	public void setMaximumPoolSize(long maximumPoolSize) {
+		this.maximumPoolSize = maximumPoolSize;
 	}
 }

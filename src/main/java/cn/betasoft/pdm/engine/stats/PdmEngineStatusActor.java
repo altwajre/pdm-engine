@@ -2,12 +2,11 @@ package cn.betasoft.pdm.engine.stats;
 
 import akka.actor.AbstractActor;
 import cn.betasoft.pdm.engine.config.akka.ActorBean;
-import cn.betasoft.pdm.engine.model.Indicator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @ActorBean
-public class EngineStatusActor extends AbstractActor {
+public class PdmEngineStatusActor extends AbstractActor {
 
     static public class DeviceAdd { }
 
@@ -29,30 +28,30 @@ public class EngineStatusActor extends AbstractActor {
 
     static public class RuleTaskMinus { }
 
-    private static final Logger logger = LoggerFactory.getLogger(EngineStatusActor.class);
+    private static final Logger logger = LoggerFactory.getLogger(PdmEngineStatusActor.class);
 
     @Override
     public Receive createReceive() {
         return receiveBuilder().match(DeviceAdd.class, info -> {
-            EngineStatus.INSTANCE.addDeviceNum();
+            PdmEngineStatus.INSTANCE.addDeviceNum();
         }).match(DeviceMinus.class, info -> {
-            EngineStatus.INSTANCE.minusDeviceNum();
+            PdmEngineStatus.INSTANCE.minusDeviceNum();
         }).match(MoAdd.class, info -> {
-            EngineStatus.INSTANCE.addMoNum();
+            PdmEngineStatus.INSTANCE.addMoNum();
         }).match(MoMinus.class, info -> {
-            EngineStatus.INSTANCE.minusMoNum();
+            PdmEngineStatus.INSTANCE.minusMoNum();
         }).match(IndicatorAdd.class, info -> {
-            EngineStatus.INSTANCE.addIndicatorNum();
+            PdmEngineStatus.INSTANCE.addIndicatorNum();
         }).match(IndicatorMinus.class, info -> {
-            EngineStatus.INSTANCE.minusIndicatorNum();
+            PdmEngineStatus.INSTANCE.minusIndicatorNum();
         }).match(AlarmTaskAdd.class, info -> {
-            EngineStatus.INSTANCE.addAlarmTaskNum();
+            PdmEngineStatus.INSTANCE.addAlarmTaskNum();
         }).match(AlarmTaskMinus.class, info -> {
-            EngineStatus.INSTANCE.minusAlarmTaskNum();
+            PdmEngineStatus.INSTANCE.minusAlarmTaskNum();
         }).match(RuleTaskAdd.class, info -> {
-            EngineStatus.INSTANCE.addRuleTaskNum();
+            PdmEngineStatus.INSTANCE.addRuleTaskNum();
         }).match(RuleTaskMinus.class, info -> {
-            EngineStatus.INSTANCE.minusRuleTaskNum();
+            PdmEngineStatus.INSTANCE.minusRuleTaskNum();
         }).matchAny(o -> logger.info("received unknown message")).build();
     }
 }

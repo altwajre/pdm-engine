@@ -1,26 +1,21 @@
 package cn.betasoft.pdm.engine.actor;
 
-import akka.actor.AbstractActor;
-import akka.actor.ActorRef;
-import akka.actor.ActorSystem;
-import akka.actor.Props;
+import akka.actor.*;
 import cn.betasoft.pdm.engine.config.akka.ActorBean;
 import cn.betasoft.pdm.engine.config.akka.AkkaProperties;
 import cn.betasoft.pdm.engine.config.akka.SpringProps;
 import cn.betasoft.pdm.engine.model.*;
 import cn.betasoft.pdm.engine.stats.EngineActorStatus;
-import cn.betasoft.pdm.engine.stats.EngineStatusActor;
+import cn.betasoft.pdm.engine.stats.PdmEngineStatusActor;
 
+import cn.betasoft.pdm.engine.stats.TreeNodeType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.json.Json;
 import javax.json.JsonObject;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 被监控的一个网络设备，可以是一台服务器，或交换机
@@ -54,7 +49,8 @@ public class DeviceActor extends AbstractActor {
 		}
 	}
 
-	static public class Status { }
+	static public class MonitorTree {
+	}
 
 	@Autowired
 	private ActorSystem actorSystem;
@@ -78,13 +74,15 @@ public class DeviceActor extends AbstractActor {
 
 	@Override
 	public void preStart() {
-		actorSystem.actorSelection("/user/supervisor/status").tell(new EngineStatusActor.DeviceAdd(), this.getSelf());
+		actorSystem.actorSelection("/user/supervisor/status").tell(new PdmEngineStatusActor.DeviceAdd(),
+				this.getSelf());
 	}
 
 	@Override
 	public void postStop() throws Exception {
 		super.postStop();
-		actorSystem.actorSelection("/user/supervisor/status").tell(new EngineStatusActor.DeviceMinus(), this.getSelf());
+		actorSystem.actorSelection("/user/supervisor/status").tell(new PdmEngineStatusActor.DeviceMinus(),
+				this.getSelf());
 	}
 
 	@Override
@@ -99,9 +97,9 @@ public class DeviceActor extends AbstractActor {
 			multiIndicatorTaskInfo.getMultiIndicatorTasks().stream().forEach(mia -> {
 				createMultiIndicatorTaskActor(mia);
 			});
-		}).match(Status.class,message->{
-			EngineActorStatus actorStatus = createActorStatus();
-			getSender().tell(actorStatus,self());
+		}).match(MonitorTree.class, message -> {
+			EngineActorStatus actorStatus = getMoniorTree();
+			getSender().tell(actorStatus, self());
 		}).matchAny(o -> logger.info("received unknown message")).build();
 	}
 
@@ -131,78 +129,100 @@ public class DeviceActor extends AbstractActor {
 		moActorRefs.put(multiIndicatorTask.getName(), actorRef);
 	}
 
-	private EngineActorStatus createActorStatus(){
-		List<EngineActorStatus> actorStatuses = new ArrayList<>();
-
+	private EngineActorStatus getMoniorTree() {
 		EngineActorStatus rootStatus = new EngineActorStatus();
 		rootStatus.setName(device.getIp());
 		rootStatus.setActorPath("/user/supervisor/d-" + device.getIp());
+		rootStatus.setNodeType(TreeNodeType.DEVICE);
 
-		actorStatuses.add(rootStatus);
-		for(ManagedObject mo : device.getMos()) {
+		for (ManagedObject mo : device.getMos()) {
 			EngineActorStatus moStatus = new EngineActorStatus();
 			moStatus.setName(mo.getName());
 			moStatus.setActorPath(rootStatus.getActorPath() + "/mo-" + mo.getMoPath());
+			moStatus.setNodeType(TreeNodeType.MANAGEDOBJECT);
 
 			rootStatus.getChildren().add(moStatus);
-			actorStatuses.add(moStatus);
+			rootStatus.getAllDescendants().put(moStatus.getActorPath(), moStatus);
 
-			for(Indicator indicator : mo.getIndicators()) {
+			for (Indicator indicator : mo.getIndicators()) {
 				EngineActorStatus indicatorStatus = new EngineActorStatus();
 				indicatorStatus.setName(indicator.getName());
 				indicatorStatus.setActorPath(moStatus.getActorPath() + "/indi-" + indicator.getName());
+				indicatorStatus.setNodeType(TreeNodeType.INDICATOR);
 
 				moStatus.getChildren().add(indicatorStatus);
-				actorStatuses.add(indicatorStatus);
+				rootStatus.getAllDescendants().put(indicatorStatus.getActorPath(), indicatorStatus);
 
-				//collect
+				// collect
 				EngineActorStatus collectStatus = new EngineActorStatus();
 				collectStatus.setName("collect");
 				collectStatus.setActorPath(indicatorStatus.getActorPath() + "/collect");
+				collectStatus.setNodeType(TreeNodeType.COLLECT);
 
 				indicatorStatus.getChildren().add(collectStatus);
-				actorStatuses.add(collectStatus);
+				rootStatus.getAllDescendants().put(collectStatus.getActorPath(), collectStatus);
 
-				//httpGet
+				// httpGet
 				EngineActorStatus httpStatus = new EngineActorStatus();
 				httpStatus.setName("httpGetData");
 				httpStatus.setActorPath(collectStatus.getActorPath() + "/httpGetData");
+				httpStatus.setNodeType(TreeNodeType.HTTPGET);
 
 				collectStatus.getChildren().add(httpStatus);
-				actorStatuses.add(httpStatus);
+				rootStatus.getAllDescendants().put(httpStatus.getActorPath(), httpStatus);
 
 				for (SingleIndicatorTask singleTask : indicator.getSingleIndicatorTasks()) {
 					EngineActorStatus singleTaskStatus = new EngineActorStatus();
 					singleTaskStatus.setName(singleTask.getName());
 					singleTaskStatus.setActorPath(indicatorStatus.getActorPath() + "/st-" + singleTask.getKey());
+					if (singleTask.getType() == TaskType.ALARM) {
+						singleTaskStatus.setNodeType(TreeNodeType.ALARM);
+					} else {
+						singleTaskStatus.setNodeType(TreeNodeType.RULE);
+					}
 
-					indicatorStatus.getChildren().add(singleTaskStatus);
-					actorStatuses.add(singleTaskStatus);
+					rootStatus.getAllDescendants().put(singleTaskStatus.getActorPath(), singleTaskStatus);
 				}
 			}
 
 		}
 
+		rootStatus.setShowData(createShowData(rootStatus));
+
 		return rootStatus;
 	}
 
-	private String createShowData(){
-		JsonObject value = Json.createObjectBuilder()
-				.add("firstName", "John")
-				.add("lastName", "Smith")
-				.add("age", 25)
-				.add("address", Json.createObjectBuilder()
-						.add("streetAddress", "21 2nd Street")
-						.add("city", "New York")
-						.add("state", "NY")
-						.add("postalCode", "10021"))
-				.add("phoneNumber", Json.createArrayBuilder()
-						.add(Json.createObjectBuilder()
-								.add("type", "home")
-								.add("number", "212 555-1234"))
-						.add(Json.createObjectBuilder()
-								.add("type", "fax")
-								.add("number", "646 555-4567")))
+	private String createShowData(EngineActorStatus root) {
+		LocalActorRef ref = (LocalActorRef) this.getSelf();
+		Cell cell = ref.underlying();
+		ActorCell ac = (ActorCell) cell;
+		int mailboxSize = ac.mailbox().numberOfMessages();
+
+		int moNum = 0;
+		int indicatorNum = 0;
+		int alarmNum = 0;
+		int ruleNum = 0;
+		int descendantNum = 0;
+
+		for (Map.Entry<String, EngineActorStatus> descendantMap : root.getAllDescendants().entrySet()) {
+			if (descendantMap.getValue().getNodeType() == TreeNodeType.MANAGEDOBJECT) {
+				moNum++;
+				descendantNum++;
+			} else if (descendantMap.getValue().getNodeType() == TreeNodeType.INDICATOR) {
+				indicatorNum++;
+				descendantNum++;
+			} else if (descendantMap.getValue().getNodeType() == TreeNodeType.ALARM) {
+				alarmNum++;
+			} else if (descendantMap.getValue().getNodeType() == TreeNodeType.RULE) {
+				ruleNum++;
+			}
+		}
+
+		root.setDescendantNum(descendantNum);
+
+		JsonObject value = Json.createObjectBuilder().add("ip地址", this.device.getIp()).add("未处理消息", mailboxSize)
+				.add("子结点", Json.createObjectBuilder().add("mo", moNum).add("指标", indicatorNum).add("告警", alarmNum)
+						.add("智维", ruleNum))
 				.build();
 		return value.toString();
 	}

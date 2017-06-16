@@ -11,12 +11,16 @@ import cn.betasoft.pdm.engine.config.akka.AkkaProperties;
 import cn.betasoft.pdm.engine.config.akka.SpringProps;
 import cn.betasoft.pdm.engine.model.Indicator;
 import cn.betasoft.pdm.engine.model.SingleIndicatorTask;
-import cn.betasoft.pdm.engine.stats.EngineStatusActor;
+import cn.betasoft.pdm.engine.model.TaskType;
+import cn.betasoft.pdm.engine.stats.PdmEngineStatusActor;
+import cn.betasoft.pdm.engine.stats.ShowData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import scala.concurrent.duration.Duration;
 
+import javax.json.Json;
+import javax.json.JsonObject;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,6 +50,9 @@ public class IndicatorActor extends AbstractActor {
 		}
 	}
 
+	static public class GetShowData {
+	}
+
 	@Autowired
 	private ActorSystem actorSystem;
 
@@ -67,13 +74,15 @@ public class IndicatorActor extends AbstractActor {
 
 	@Override
 	public void preStart() {
-		actorSystem.actorSelection("/user/supervisor/status").tell(new EngineStatusActor.IndicatorAdd(), this.getSelf());
+		actorSystem.actorSelection("/user/supervisor/status").tell(new PdmEngineStatusActor.IndicatorAdd(),
+				this.getSelf());
 	}
 
 	@Override
 	public void postStop() throws Exception {
 		super.postStop();
-		actorSystem.actorSelection("/user/supervisor/status").tell(new EngineStatusActor.IndicatorMinus(), this.getSelf());
+		actorSystem.actorSelection("/user/supervisor/status").tell(new PdmEngineStatusActor.IndicatorMinus(),
+				this.getSelf());
 	}
 
 	private static SupervisorStrategy strategy = new OneForOneStrategy(10, Duration.create("1 minute"),
@@ -101,6 +110,8 @@ public class IndicatorActor extends AbstractActor {
 					.withDispatcher(akkaProperties.getWorkDispatch());
 			collectActorRef = getContext().actorOf(props, "collect");
 			this.getContext().watch(collectActorRef);
+		}).match(GetShowData.class, message -> {
+			getSender().tell(createShowData(), self());
 		}).match(Terminated.class, t -> t.getActor().path().name().startsWith("st-"), t -> {
 			taskActorRefs = taskActorRefs.entrySet().stream().filter(map -> !map.getValue().equals(t.getActor()))
 					.collect(Collectors.toMap(p -> p.getKey(), p -> p.getValue()));
@@ -111,7 +122,7 @@ public class IndicatorActor extends AbstractActor {
 	}
 
 	private void createTaskActor(SingleIndicatorTask singleIndicatorTask) {
-		Props props = null;
+		Props props;
 		if (singleIndicatorTask.getTopLevel() != null && singleIndicatorTask.getTopLevel()) {
 			props = SpringProps
 					.create(actorSystem, SingleIndicatorTaskActor.class, new Object[] { singleIndicatorTask })
@@ -124,5 +135,26 @@ public class IndicatorActor extends AbstractActor {
 		ActorRef actorRef = getContext().actorOf(props, "st-" + singleIndicatorTask.getKey());
 		this.getContext().watch(actorRef);
 		taskActorRefs.put(singleIndicatorTask.getKey(), actorRef);
+	}
+
+	private ShowData createShowData() {
+
+		int alarmNum = 0;
+		int ruleNum = 0;
+
+		for (SingleIndicatorTask singleTask : indicator.getSingleIndicatorTasks()) {
+			if (singleTask.getType() == TaskType.ALARM) {
+				alarmNum++;
+			} else {
+				ruleNum++;
+			}
+		}
+
+		JsonObject value = Json.createObjectBuilder().add("指标名称", indicator.getName())
+				.add("参数", indicator.getParameters())
+				.add("子结点", Json.createObjectBuilder().add("告警规则", alarmNum).add("智维规则", ruleNum)).build();
+		String path = this.getSelf().path().toString();
+		int beginIndex = path.indexOf("/user/");
+		return new ShowData(path.substring(beginIndex), value.toString());
 	}
 }

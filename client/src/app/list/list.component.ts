@@ -62,6 +62,12 @@ export class ListComponent implements OnInit, AfterViewInit, OnDestroy {
   newCollectStatInfo = {};
   collectStatSeriesNames = ['完成数', '超时数', '平均时间'];
 
+ // collectStat
+  indicatorHandleStatInfos = [];
+  newIndicatorHandleStatInfo = {};
+  indicatorHandleStatSeriesNames = ['完成数', '超时数', '平均时间'];
+
+
   // mailboxStat
   mailboxStatInfos = [];
   newMailboxStatInfo = {};
@@ -140,6 +146,21 @@ export class ListComponent implements OnInit, AfterViewInit, OnDestroy {
       },
       error => this.errorMessage = <any>error);
 
+    this._monitorService.findIndicatorHandleStat(2).subscribe(
+      infos => {
+        this.indicatorHandleStatInfos = [];
+        if (infos && infos.length > 0) {
+          for (var info of infos) {
+            this.indicatorHandleStatInfos.push({
+              0: [info.sampleTime, info.totalNumber],
+              1: [info.sampleTime, info.timeoutNumber],
+              2: [info.sampleTime, info.avgTime]
+            });
+          }
+        }
+      },
+      error => this.errorMessage = <any>error);  
+
     this._monitorService.findMailboxStat(2).subscribe(
       infos => {
         this.mailboxStatInfos = [];
@@ -216,6 +237,13 @@ export class ListComponent implements OnInit, AfterViewInit, OnDestroy {
         0: [collectStat.sampleTime, collectStat.totalNumber],
         1: [collectStat.sampleTime, collectStat.timeoutNumber],
         2: [collectStat.sampleTime, collectStat.avgTime]
+      }
+    } else if (monitorMessage.type == MonitorType.INDICATORHANDLESTAT) {
+      let indicatorHandleStat = JSON.parse(monitorMessage.message) as CollectStat;
+      this.newIndicatorHandleStatInfo = {
+        0: [indicatorHandleStat.sampleTime, indicatorHandleStat.totalNumber],
+        1: [indicatorHandleStat.sampleTime, indicatorHandleStat.timeoutNumber],
+        2: [indicatorHandleStat.sampleTime, indicatorHandleStat.avgTime]
       }
     } else if (monitorMessage.type == MonitorType.MAILBOX) {
       let mailboxStat = JSON.parse(monitorMessage.message) as MailBoxStat;

@@ -54,6 +54,10 @@ public class MonitorListenerStart {
 		consumers.add(collectStatListener);
 		executor.submit(collectStatListener);
 
+		Thread indicatorHandleStatListener = new IndicatorHandleStatListener(kafkaConsumerProperties, monitorMsgSend);
+		consumers.add(indicatorHandleStatListener);
+		executor.submit(indicatorHandleStatListener);
+
 		Thread mailboxStatListener = new MailBoxStatListener(kafkaConsumerProperties, monitorMsgSend);
 		consumers.add(mailboxStatListener);
 		executor.submit(mailboxStatListener);

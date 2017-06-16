@@ -1,22 +1,24 @@
 package cn.betasoft.pdm.engine.actor;
 
-import akka.actor.AbstractActor;
-import akka.actor.ActorRef;
-import akka.actor.ActorSystem;
-import akka.actor.Props;
+import akka.actor.*;
 import cn.betasoft.pdm.engine.config.akka.ActorBean;
 import cn.betasoft.pdm.engine.config.akka.SpringProps;
 import cn.betasoft.pdm.engine.model.Indicator;
 import cn.betasoft.pdm.engine.model.ManagedObject;
-import cn.betasoft.pdm.engine.stats.EngineStatusActor;
+import cn.betasoft.pdm.engine.model.SingleIndicatorTask;
+import cn.betasoft.pdm.engine.model.TaskType;
+import cn.betasoft.pdm.engine.stats.PdmEngineStatusActor;
+
+import cn.betasoft.pdm.engine.stats.ShowData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import javax.json.Json;
+import javax.json.JsonObject;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * 被监控一个资源，例如数据库，中间件，服务器
@@ -37,6 +39,9 @@ public class MoActor extends AbstractActor {
 		}
 	}
 
+	static public class GetShowData {
+	}
+
 	@Autowired
 	private ActorSystem actorSystem;
 
@@ -53,13 +58,13 @@ public class MoActor extends AbstractActor {
 
 	@Override
 	public void preStart() {
-		actorSystem.actorSelection("/user/supervisor/status").tell(new EngineStatusActor.MoAdd(), this.getSelf());
+		actorSystem.actorSelection("/user/supervisor/status").tell(new PdmEngineStatusActor.MoAdd(), this.getSelf());
 	}
 
 	@Override
 	public void postStop() throws Exception {
 		super.postStop();
-		actorSystem.actorSelection("/user/supervisor/status").tell(new EngineStatusActor.MoMinus(), this.getSelf());
+		actorSystem.actorSelection("/user/supervisor/status").tell(new PdmEngineStatusActor.MoMinus(), this.getSelf());
 	}
 
 	@Override
@@ -70,6 +75,8 @@ public class MoActor extends AbstractActor {
 					createIndicatorActor(indicator);
 				}
 			});
+		}).match(GetShowData.class, message -> {
+			getSender().tell(createShowData(), self());
 		}).matchAny(o -> logger.info("received unknown message")).build();
 	}
 
@@ -83,5 +90,31 @@ public class MoActor extends AbstractActor {
 		actorRef.tell(new IndicatorActor.SingleIndicatorTaskInfo(indicator.getSingleIndicatorTasks()), this.getSelf());
 		// create collect
 		actorRef.tell(new IndicatorActor.CollectDataInfo(), this.getSelf());
+	}
+
+	private ShowData createShowData() {
+
+		int indicatorNum = 0;
+		int alarmNum = 0;
+		int ruleNum = 0;
+
+		for (Indicator indicator : this.mo.getIndicators()) {
+			indicatorNum++;
+
+			for (SingleIndicatorTask singleTask : indicator.getSingleIndicatorTasks()) {
+				if (singleTask.getType() == TaskType.ALARM) {
+					alarmNum++;
+				} else {
+					ruleNum++;
+				}
+			}
+		}
+
+		JsonObject value = Json.createObjectBuilder().add("MO名称", this.mo.getName()).add("moPath", this.mo.getMoPath())
+				.add("子结点", Json.createObjectBuilder().add("采集指标", indicatorNum).add("告警规则", alarmNum).add("智维规则", ruleNum))
+				.build();
+		String path = this.getSelf().path().toString();
+		int beginIndex = path.indexOf("/user/");
+		return new ShowData(path.substring(beginIndex), value.toString());
 	}
 }

@@ -7,6 +7,7 @@ import { routing } from './app.routing';
 import { ConfigService } from './services/config.service';
 import { StompConfigService, StompService } from "@stomp/ng2-stompjs";
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { PrettyJsonModule } from 'angular2-prettyjson';
 
 import { CoreModule } from './core/core.module';
 import { ComponentModule } from './component/component.module';
@@ -25,6 +26,7 @@ import { ListComponent } from './list/list.component';
     FormsModule,
     HttpModule,
     NgbModule.forRoot(),
+    PrettyJsonModule,
     CoreModule,
     ComponentModule,
     routing

@@ -2,7 +2,7 @@ package cn.betasoft.pdm.engine.model.monitor;
 
 public enum MonitorType {
 	HEAP("heap"), DEADLETTER("deadLetter"), DEFAULTDISPSTCHER("defaultDispatcher"), WORKDISPATCHER(
-			"workDispatcher"), FUTUREDISPATCHER("futureDispatcher"),COLLECTSTAT("collectDataStat"),MAILBOX("mailbox");
+			"workDispatcher"), FUTUREDISPATCHER("futureDispatcher"),COLLECTSTAT("collectDataStat"),MAILBOX("mailbox"),INDICATORHANDLESTAT("indicatorHandleStat");
 
 	private final String name;
 

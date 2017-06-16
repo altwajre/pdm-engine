@@ -7,6 +7,7 @@ import { HeapInfo } from '../model/HeapInfo';
 import { DispatcherInfo } from '../model/DispatcherInfo';
 import { CollectStat } from '../model/CollectStat';
 import { MailBoxStat } from '../model/MailBoxStat';
+import { EngineActorStatus } from '../model/EngineActorStatus';
 
 @Injectable()
 export class MonitorService {
@@ -17,16 +18,16 @@ export class MonitorService {
         return this.http
             .get('api/monitor/heap/query/' + offsetMinute)
             .map(response => {
-                return response.json() as HeapInfo[]
+                return response.json() as HeapInfo[];
             });
     }
 
-    findDispatcherInfo(dispatcherName,offsetMinute: number): Observable<DispatcherInfo[]> {
-        let url = 'api/monitor/dispatcher/'+dispatcherName+'/query/' + offsetMinute;
+    findDispatcherInfo(dispatcherName, offsetMinute: number): Observable<DispatcherInfo[]> {
+        let url = 'api/monitor/dispatcher/' + dispatcherName + '/query/' + offsetMinute;
         return this.http
             .get(url)
             .map(response => {
-                return response.json() as DispatcherInfo[]
+                return response.json() as DispatcherInfo[];
             });
     }
 
@@ -34,7 +35,15 @@ export class MonitorService {
         return this.http
             .get('api/monitor/collectStat/query/' + offsetMinute)
             .map(response => {
-                return response.json() as CollectStat[]
+                return response.json() as CollectStat[];
+            });
+    }
+
+     findIndicatorHandleStat(offsetMinute: number): Observable<CollectStat[]> {
+        return this.http
+            .get('api/monitor/indicatorHandleStat/query/' + offsetMinute)
+            .map(response => {
+                return response.json() as CollectStat[];
             });
     }
 
@@ -42,7 +51,17 @@ export class MonitorService {
         return this.http
             .get('api/monitor/mailboxStat/query/' + offsetMinute)
             .map(response => {
-                return response.json() as MailBoxStat[]
+                return response.json() as MailBoxStat[];
+            });
+    }
+
+    queryActorTree(deviceIp: string): Observable<EngineActorStatus> {
+         let formData:FormData = new FormData();  
+         formData.append('ip',deviceIp);  
+
+        return this.http.post('api/monitor/engine/actorStatus', formData)
+            .map(response => {
+                return response.json() as EngineActorStatus;
             });
     }
 

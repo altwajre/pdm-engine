@@ -44,6 +44,7 @@ export class SplineComponent implements OnInit, AfterViewInit, OnDestroy {
 
     @Input()
     set newData(newData: any) {
+        console.log(this.title);
         if (newData && this._chart) {
             let update = false;
             let pointObjects: Highcharts.PointObject[] = this._chart.series[0].data;

@@ -1,20 +1,31 @@
 package cn.betasoft.pdm.engine.stats;
 
 
-import java.util.ArrayList;
-import java.util.List;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
-public class EngineActorStatus {
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class EngineActorStatus implements Comparable{
 
     private String name;
 
     private String actorPath;
 
-    private int mailboxNum;
+    @JsonFormat(shape = JsonFormat.Shape.NUMBER_INT)
+    private TreeNodeType nodeType;
 
     private String showData;
 
     private List<EngineActorStatus> children = new ArrayList<>();
+
+    private int descendantNum;
+
+    @JsonIgnore
+    private Map<String,EngineActorStatus> allDescendants = new HashMap<>();
 
     public EngineActorStatus(){
 
@@ -36,12 +47,12 @@ public class EngineActorStatus {
         this.actorPath = actorPath;
     }
 
-    public int getMailboxNum() {
-        return mailboxNum;
+    public TreeNodeType getNodeType() {
+        return nodeType;
     }
 
-    public void setMailboxNum(int mailboxNum) {
-        this.mailboxNum = mailboxNum;
+    public void setNodeType(TreeNodeType nodeType) {
+        this.nodeType = nodeType;
     }
 
     public String getShowData() {
@@ -58,5 +69,26 @@ public class EngineActorStatus {
 
     public void setChildren(List<EngineActorStatus> children) {
         this.children = children;
+    }
+
+    public int getDescendantNum() {
+        return descendantNum;
+    }
+
+    public void setDescendantNum(int descendantNum) {
+        this.descendantNum = descendantNum;
+    }
+
+    public Map<String, EngineActorStatus> getAllDescendants() {
+        return allDescendants;
+    }
+
+    public void setAllDescendants(Map<String, EngineActorStatus> allDescendants) {
+        this.allDescendants = allDescendants;
+    }
+
+    @Override public int compareTo(Object obj) {
+        EngineActorStatus b = (EngineActorStatus) obj;
+        return this.getNodeType().ordinal() - b.getNodeType().ordinal();
     }
 }

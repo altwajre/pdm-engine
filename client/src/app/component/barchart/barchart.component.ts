@@ -4,7 +4,7 @@ import * as d3 from 'd3';
 @Component({
   selector: 'app-barchart',
   templateUrl: './barchart.component.html',
-  styleUrls: ['./barchart.component.css'],
+  styleUrls: ['./barchart.component.scss'],
   encapsulation: ViewEncapsulation.None
 })
 export class BarchartComponent implements OnInit, OnChanges {

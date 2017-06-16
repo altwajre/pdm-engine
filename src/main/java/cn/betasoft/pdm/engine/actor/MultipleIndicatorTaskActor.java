@@ -2,14 +2,11 @@ package cn.betasoft.pdm.engine.actor;
 
 import akka.actor.AbstractActor;
 import akka.actor.ActorSystem;
-import akka.event.Logging;
-import akka.event.LoggingAdapter;
 import cn.betasoft.pdm.engine.config.akka.ActorBean;
 import cn.betasoft.pdm.engine.event.PdmEventBusImpl;
-import cn.betasoft.pdm.engine.event.PdmMsgEnvelope;
 import cn.betasoft.pdm.engine.model.MultiIndicatorTask;
 import cn.betasoft.pdm.engine.model.TaskType;
-import cn.betasoft.pdm.engine.stats.EngineStatusActor;
+import cn.betasoft.pdm.engine.stats.PdmEngineStatusActor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,9 +45,9 @@ public class MultipleIndicatorTaskActor extends AbstractActor {
 		});
 
 		if(multiIndicatorTask.getType() == TaskType.ALARM){
-			actorSystem.actorSelection("/user/supervisor/status").tell(new EngineStatusActor.AlarmTaskAdd(), this.getSelf());
+			actorSystem.actorSelection("/user/supervisor/status").tell(new PdmEngineStatusActor.AlarmTaskAdd(), this.getSelf());
 		}else {
-			actorSystem.actorSelection("/user/supervisor/status").tell(new EngineStatusActor.RuleTaskAdd(), this.getSelf());
+			actorSystem.actorSelection("/user/supervisor/status").tell(new PdmEngineStatusActor.RuleTaskAdd(), this.getSelf());
 		}
 	}
 
@@ -70,9 +67,9 @@ public class MultipleIndicatorTaskActor extends AbstractActor {
 	public void postStop() throws Exception {
 		super.postStop();
 		if(multiIndicatorTask.getType() == TaskType.ALARM){
-			actorSystem.actorSelection("/user/supervisor/status").tell(new EngineStatusActor.AlarmTaskMinus(), this.getSelf());
+			actorSystem.actorSelection("/user/supervisor/status").tell(new PdmEngineStatusActor.AlarmTaskMinus(), this.getSelf());
 		}else {
-			actorSystem.actorSelection("/user/supervisor/status").tell(new EngineStatusActor.RuleTaskMinus(), this.getSelf());
+			actorSystem.actorSelection("/user/supervisor/status").tell(new PdmEngineStatusActor.RuleTaskMinus(), this.getSelf());
 		}
 	}
 
@@ -81,7 +78,7 @@ public class MultipleIndicatorTaskActor extends AbstractActor {
 		return receiveBuilder().match(String.class, s -> {
 			logger.info("Received String message: {}", s);
 		}).match(SingleIndicatorTaskActor.Result.class, result -> {
-			logger.info("receive indicator result: {}", result.getValue());
+			//logger.info("receive indicator result: {}", result.getValue());
 		}).matchAny(o -> {
 			logger.info("received unknown message");
 		}).build();

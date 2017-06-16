@@ -42,25 +42,27 @@ public class JobTestServiceImpl implements JobTestService {
 		// 不能包括中文
 		String[] indicatorNames = { "PING", "CPU", "MEM", "DISK", "PORT" };
 
-		for (int i = 0; i < 100; i++) {
+		for (int i = 0; i < 10; i++) {
 			Device device = new Device();
 			device.setIp("138.174.65." + i);
 			device.setName("device-" + i);
 
 			Random moRandom = new Random();
-			int moNum = 1 + moRandom.nextInt(4);
+			int moNum = 3 + moRandom.nextInt(4);
 
 			// 一个设备下有多个资源
-			for (int j = 0; j < 5; j++) {
+			for (int j = 0; j < moNum; j++) {
 				ManagedObject mo = new ManagedObject();
 				mo.setMoPath(UUID.randomUUID().toString());
-				mo.setName("mo-" + i);
+				mo.setName("mo-" + j);
 				mo.setType(ManagedObjectType.getTypeByOrdinal(moNum));
 				mo.setDevice(device);
 
+				device.getMos().add(mo);
+
 				// 一个资源下有多个采集指标
 				Random indicatorRandom = new Random();
-				int indicatorNum = indicatorRandom.nextInt(4);
+				int indicatorNum = 2+indicatorRandom.nextInt(3);
 				for (int k = 0; k < indicatorNum; k++) {
 					Indicator indicator = new Indicator();
 					indicator.setName(indicatorNames[k]);
@@ -72,10 +74,10 @@ public class JobTestServiceImpl implements JobTestService {
 
 					// 一个指标下有多个任务
 					Random taskRandom = new Random();
-					int taskNum = 2 + taskRandom.nextInt(10);
+					int taskNum = 5 + taskRandom.nextInt(10);
 					for (int m = 0; m < taskNum; m++) {
 						SingleIndicatorTask task = new SingleIndicatorTask();
-						if (m % 2 == 0) {
+						if (m % 5 == 0) {
 							task.setType(TaskType.ALARM);
 						} else {
 							task.setType(TaskType.RULE);
@@ -96,10 +98,10 @@ public class JobTestServiceImpl implements JobTestService {
 
 						int[] days = { CronWeekdays.SATURDAY.getWeekday(), CronWeekdays.SUNDAY.getWeekday() };
 						String holidayCronExrepsstion = HolidayCronBuilder.INSTANCE.buildWeeklyCron(days);
-						//task.getHolidayCronExrpessions().add(holidayCronExrepsstion);
+						// task.getHolidayCronExrpessions().add(holidayCronExrepsstion);
 
 						String todayExrepsstion = "0 0-4 17 * * ?";
-						//task.getHolidayCronExrpessions().add(todayExrepsstion);
+						// task.getHolidayCronExrpessions().add(todayExrepsstion);
 
 						Random cronRandom = new Random();
 						int cronNum = cronRandom.nextInt(7);
@@ -114,13 +116,9 @@ public class JobTestServiceImpl implements JobTestService {
 
 						indicator.getSingleIndicatorTasks().add(task);
 						task.setIndicator(indicator);
-
-//						System.out.println("task is: " + task.getKey() + ",indicator is:" + indicator.getName()
-//								+ ",mo is:" + mo.getMoPath() + ",device is:" + device.getIp());
 					}
 				}
 
-				device.getMos().add(mo);
 			}
 			devices.add(device);
 		}

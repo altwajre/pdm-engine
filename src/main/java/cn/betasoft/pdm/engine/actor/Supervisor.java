@@ -4,17 +4,14 @@ import akka.actor.*;
 import cn.betasoft.pdm.engine.config.akka.ActorBean;
 import cn.betasoft.pdm.engine.config.akka.SpringProps;
 import cn.betasoft.pdm.engine.model.Device;
-import cn.betasoft.pdm.engine.stats.EngineStatusActor;
+import cn.betasoft.pdm.engine.stats.PdmEngineStatusActor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
-
-import static sun.audio.AudioDevice.device;
 
 /**
  * pdm actor 根类，系统中所有的其它actor都是它的孩子
@@ -47,7 +44,7 @@ public class Supervisor extends AbstractActor {
 
 	@Override
 	public void preStart() {
-		Props props = SpringProps.create(actorSystem, EngineStatusActor.class, null);
+		Props props = SpringProps.create(actorSystem, PdmEngineStatusActor.class, null);
 		engineStatusActor = getContext().actorOf(props, "status");
 		this.getContext().watch(engineStatusActor);
 	}
