@@ -82,6 +82,7 @@ public class PdmJob {
 				.withSchedule(cronSchedule(cronExpression).withMisfireHandlingInstructionDoNothing())
 				.forJob(name, group).build();
 		triggers.add(trigger);
+		logger.info("add a {} job triiger {}",triggerName,cronExpression);
 	}
 
 	public PdmJob addJobData(String key, Object value) {

@@ -4,7 +4,4 @@ public interface JobTestService {
 
 	void testActorModel();
 
-	boolean addDynamicJob(String name);
-
-	void removeJob(String name);
 }

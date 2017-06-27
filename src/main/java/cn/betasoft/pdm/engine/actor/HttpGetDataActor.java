@@ -10,6 +10,8 @@ import cn.betasoft.pdm.engine.config.akka.AkkaProperties;
 import cn.betasoft.pdm.engine.config.aspectj.FutureLogExecutionTime;
 import cn.betasoft.pdm.engine.config.aspectj.LogExecutionTime;
 import cn.betasoft.pdm.engine.exception.DataCollectTimeOut;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,16 +44,22 @@ public class HttpGetDataActor extends AbstractActor {
 	@Autowired
 	private AkkaProperties akkaProperties;
 
+	@Autowired
+	private MetricRegistry metricRegistry;
+
+	private Timer responses;
+
 	private ExecutionContext ec;
 
 	@Override
 	public void preStart() {
+		init();
 		ec = actorSystem.dispatchers().lookup(akkaProperties.getFutureDispatch());
 	}
 
 	@Override
 	public void postRestart(Throwable reason) {
-
+		init();
 	}
 
 	@Override
@@ -59,6 +67,10 @@ public class HttpGetDataActor extends AbstractActor {
 		postStop();
 	}
 
+	private void init() {
+		responses = metricRegistry.timer(MetricRegistry.name("monitor.timer","collect"));
+
+	}
 	@Override
 	public Receive createReceive() {
 		return receiveBuilder().match(HttpGetData.class, httpGetData -> {
@@ -73,6 +85,7 @@ public class HttpGetDataActor extends AbstractActor {
 
 	@FutureLogExecutionTime
 	private SingleIndicatorTaskActor.Result httpGetHandler(HttpGetData httpGetData){
+		final Timer.Context context = responses.time();
 		logger.debug("command is {},task time is {} ,http collect start...", httpGetData.getCommand(),
 				sdf.format(httpGetData.scheduledFireTime));
 		Random random = new Random();
@@ -89,6 +102,7 @@ public class HttpGetDataActor extends AbstractActor {
 
 		logger.debug("command is {},task time is {} ,http collect finish...", httpGetData.getCommand(),
 				sdf.format(httpGetData.scheduledFireTime));
+		context.stop();
 		return result;
 	}
 

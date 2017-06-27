@@ -109,7 +109,7 @@ public class SingleIndicatorTaskActor extends AbstractActor {
 
 	private void init() {
 		try {
-			responses = metricRegistry.timer(MetricRegistry.name(SingleIndicatorTaskActor.class,"get-latency"));
+			responses = metricRegistry.timer(MetricRegistry.name("monitor.timer","latency"));
 
 			fireCronExpression = new CronExpression(task.getCronExpression());
 			for (String holiday : task.getHolidayCronExrpessions()) {

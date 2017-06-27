@@ -7,14 +7,10 @@ import akka.actor.ActorSystem;
 import cn.betasoft.pdm.engine.actor.Supervisor;
 import cn.betasoft.pdm.engine.model.*;
 import org.quartz.Scheduler;
-import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import cn.betasoft.pdm.engine.scheduler.dynamic.DynamicJob;
-import cn.betasoft.pdm.engine.scheduler.dynamic.DynamicSchedulerFactory;
 
 @Component
 public class JobTestServiceImpl implements JobTestService {
@@ -27,9 +23,6 @@ public class JobTestServiceImpl implements JobTestService {
 
 	@Autowired
 	private Scheduler scheduler;
-
-	@Autowired
-	DynamicSchedulerFactory dynamicSchedulerFactory;
 
 	private static final Logger logger = LoggerFactory.getLogger(JobTestService.class);
 
@@ -175,40 +168,4 @@ public class JobTestServiceImpl implements JobTestService {
 		});
 	}
 
-	/*
-	 * 添加一个动态的JOB
-	 */
-	public boolean addDynamicJob(String name) {
-		DynamicJob dynamicJob = createDynamicJob(name);
-		dynamicJob.addJobData("uuuid", UUID.randomUUID().toString());// transfer
-																		// parameter
-
-		try {
-			dynamicSchedulerFactory.registerJob(dynamicJob);
-		} catch (SchedulerException e) {
-			throw new IllegalStateException(e);
-		}
-
-		return true;
-	}
-
-	/*
-	 * 删除一个JOB
-	 */
-	public void removeJob(String name) {
-		final DynamicJob dynamicJob = createDynamicJob(name);
-		try {
-			final boolean result = dynamicSchedulerFactory.removeJob(dynamicJob);
-			logger.info("Remove DynamicJob [{}] result: {}", dynamicJob, result);
-		} catch (SchedulerException e) {
-			throw new IllegalStateException(e);
-		}
-	}
-
-	// 创建 一个动态的JOB, 测试用
-	private DynamicJob createDynamicJob(String name) {
-		return new DynamicJob(name)
-				// 动态定时任务的 cron, 每10秒执行一次
-				.cronExpression("0/10 * * * * ?").target(TargetDynamicJob.class);
-	}
 }

@@ -15,8 +15,6 @@ public class TargetDynamicJob implements Job {
 
 	@Override
 	public void execute(JobExecutionContext context) throws JobExecutionException {
-
-		final Object collectActorPath = context.getMergedJobDataMap().get("collectActorPath");
 		JobKey jobKey = context.getJobDetail().getKey();
 		TriggerKey triggerKey = context.getTrigger().getKey();
 		Date fireTime = context.getFireTime();
